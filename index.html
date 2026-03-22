@@ -1,14 +1,45 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>TaskBook V1.0.0</title>
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
-    
+    <div class="input-container">
+        <input type="text" id="taskInput" placeholder="Nova tarefa...">
+        <button class="add-btn" onclick="addTask()">Adicionar</button>
+    </div>
+
+    <div class="scene">
+        <div class="notebook" id="notebook">
+
+            <!-- Base traseira fixa -->
+            <div class="page cover-back" style="z-index: 0;"></div>
+
+            <!-- Páginas Dinâmicas -->
+            <div id="pages-container"></div>
+
+            <!-- Capa Dianteira -->
+            <div class="page cover-front" id="cover" onclick="toggleCover()">
+                <div class="page-face front">
+                    <h2>NOTEBOOK<br>TASKS</h2>
+                </div>
+                <div class="page-face back"></div>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="nav">
+        <button class="nav-btn" id="prevBtn" onclick="prevPage()" disabled>ANTERIOR</button>
+        <button class="nav-btn" id="nextBtn" onclick="nextPage()" disabled>PRÓXIMA</button>
+    </div>
 
     <script src="main.js"></script>
 </body>
+
 </html>
