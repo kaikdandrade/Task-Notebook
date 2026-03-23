@@ -5,36 +5,35 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TaskBook</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
-    <div class="input-bar">
-        <input type="text" id="taskInput" placeholder="Sua próxima tarefa crítica...">
-        <button class="add-btn" onclick="addTask()">Adicionar</button>
+    <div class="notebook-container">
+        <div class="notebook" id="notebook">
+
+            <div class="cover cover-left"></div>
+            <div class="cover cover-right"></div>
+
+            <div class="static-page left-page sheet" id="page-left">
+            </div>
+
+            <div class="animated-page sheet" id="animated-page">
+                <div class="front" id="anim-front">
+                </div>
+                <div class="back" id="anim-back">
+                </div>
+            </div>
+
+            <div class="static-page right-page sheet" id="page-right">
+            </div>
+
+        </div>
     </div>
 
-    <div class="notebook-box">
-        <!-- Folha da Animação -->
-        <div class="flip-sheet" id="flipSheet">
-            <div class="sheet-face front"></div>
-            <div class="sheet-face back"></div>
-        </div>
-
-        <div class="notebook-inner">
-            <!-- Página Esquerda -->
-            <div class="page left">
-                <div class="page-title" id="leftTitle">Informações</div>
-                <div class="paper-grid" id="leftContent"></div>
-            </div>
-
-            <!-- Página Direita -->
-            <div class="page right">
-                <div class="page-title" id="rightTitle">Tarefas</div>
-                <div class="paper-grid" id="rightContent"></div>
-            </div>
-        </div>
+    <div class="controls">
+        <button id="prevBtn" onclick="prevPage()">Anterior</button>
+        <button id="nextBtn" onclick="nextPage()">Próximo</button>
     </div>
 
     <script src="main.js"></script>

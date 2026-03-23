@@ -1,223 +1,210 @@
-:root {
-    --bg-color: #0d0d0d;
-    --accent-color: #d4af37;
-    --page-bg: #fffdf5;
-    --line-color: #d1e4f0;
-    --margin-red: #ff8585;
-    --text-color: #2c3e50;
-    --lh: 31px;
-    /* Altura exata da linha */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Courier New', Courier, monospace;
+    /* Fonte de máquina de escrever para realismo */
 }
 
 body {
-    background-color: var(--bg-color);
-    color: white;
-    font-family: 'Poppins', sans-serif;
     display: flex;
-    flex-direction: column;
-    align-items: center;
     justify-content: center;
+    align-items: center;
     min-height: 100vh;
-    margin: 0;
+    background-color: #333;
+    /* Fundo escuro para destacar o caderno */
     overflow: hidden;
 }
 
-/* Input Superior */
-.input-bar {
-    margin-bottom: 30px;
-    display: flex;
-    background: #1a1a1a;
-    padding: 10px;
-    border-radius: 12px;
-    border: 1px solid #333;
-    z-index: 1000;
-}
-
-input {
-    background: transparent;
-    border: none;
-    color: white;
-    padding: 10px 15px;
-    width: 250px;
-    outline: none;
-    font-family: inherit;
-}
-
-.add-btn {
-    background: var(--accent-color);
-    border: none;
-    padding: 10px 20px;
-    border-radius: 8px;
-    font-weight: 800;
-    cursor: pointer;
-    text-transform: uppercase;
-}
-
-/* Container do Caderno */
-.notebook-box {
-    perspective: 2500px;
-    width: 920px;
-    height: 580px;
+/* --- CSS: Estrutura do Caderno --- */
+.notebook-container {
+    perspective: 2000px;
+    /* Crucial para o efeito 3D */
+    width: 900px;
+    height: 600px;
     position: relative;
 }
 
-.notebook-inner {
+.notebook {
     width: 100%;
     height: 100%;
-    display: flex;
-    background: #222;
-    padding: 10px;
-    border-radius: 8px;
-    box-shadow: 0 40px 80px rgba(0, 0, 0, 0.8);
     position: relative;
     transform-style: preserve-3d;
+    transition: transform 0.5s ease;
+    /* Centraliza o caderno ligeiramente para compensar a lombada */
+    transform: translateX(0%);
 }
 
-/* Páginas Esquerda e Direita */
-.page {
-    flex: 1;
-    background-color: var(--page-bg);
-    position: relative;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.05);
-}
-
-.page.left {
-    border-radius: 4px 0 0 4px;
-    border-right: 1px solid #e0e0e0;
-}
-
-.page.right {
-    border-radius: 0 4px 4px 0;
-    border-left: 1px solid #e0e0e0;
-}
-
-/* GRADE DE PRECISÃO - O segredo do alinhamento */
-.paper-grid {
-    width: 100%;
+/* Capa do Caderno */
+.cover {
+    position: absolute;
+    width: 50%;
     height: 100%;
-    background-image:
-        linear-gradient(90deg, transparent 54px, var(--margin-red) 54px, var(--margin-red) 56px, transparent 56px),
-        repeating-linear-gradient(transparent 0px, transparent 30px, var(--line-color) 30px, var(--line-color) 31px);
-    padding-top: 62px;
-    /* Pula exatamente 2 linhas */
-    box-sizing: border-box;
+    background-color: #8b4513;
+    /* Cor marrom couro */
+    border-radius: 10px 0 0 10px;
+    box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.5);
+    top: 0;
+    left: 0;
+    z-index: 1;
+    /* Capa fica no fundo */
+}
+
+.cover-right {
+    left: 50%;
+    border-radius: 0 10px 10px 0;
+    background-color: #a0522d;
+    /* Tom ligeiramente diferente para variação */
+}
+
+/* --- CSS: Estilização das Páginas (Folhas) --- */
+.page-content {
+    padding: 40px;
+    line-height: 1.6;
+    color: #333;
+}
+
+.page-content h2 {
+    margin-bottom: 20px;
+    border-bottom: 2px solid #333;
+    display: inline-block;
 }
 
 .task-list {
     list-style: none;
-    padding: 0;
-    margin: 0;
-    display: block;
 }
 
-.task-item {
-    height: var(--lh);
-    /* 31px */
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
-    /* Alinha à esquerda */
-    padding: 0 20px 0 65px;
-    /* Começa depois da margem vermelha */
-    color: var(--text-color);
-    font-size: 0.95rem;
+.task-list li {
+    margin-bottom: 10px;
     position: relative;
-    white-space: nowrap;
+    padding-left: 30px;
 }
 
-.task-item input[type="checkbox"] {
-    margin-right: 12px;
-    accent-color: var(--accent-color);
-    cursor: pointer;
-    width: 16px;
-    height: 16px;
-}
-
-.task-item.done span {
-    text-decoration: line-through;
-    opacity: 0.4;
-}
-
-/* Botão Deletar melhorado */
-.del-icon {
-    margin-left: auto;
-    color: var(--margin-red);
-    font-weight: bold;
-    cursor: pointer;
-    font-size: 1.2rem;
-    opacity: 0;
-    transition: 0.2s;
-    padding: 0 5px;
-}
-
-.task-item:hover .del-icon {
-    opacity: 1;
-}
-
-/* Botões de Navegação nas Linhas */
-.nav-line {
-    height: var(--lh);
-    padding-left: 65px;
-    display: flex;
-    align-items: center;
-    color: var(--accent-color);
-    font-weight: 800;
-    font-size: 0.75rem;
-    cursor: pointer;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
-
-/* ANIMAÇÃO DE VIRADA (FLIP) CORRIGIDA */
-.flip-sheet {
+/* Quadrado do checkbox simulado */
+.task-list li::before {
+    content: '';
     position: absolute;
-    top: 10px;
-    left: 50%;
-    /* Começa no eixo central */
-    width: 450px;
-    height: 560px;
-    z-index: 500;
+    left: 0;
+    top: 4px;
+    width: 15px;
+    height: 15px;
+    border: 1px solid #333;
+}
+
+/* Estilo base de folha de papel */
+.sheet {
+    background-color: #fdfcf0;
+    /* Cor creme papel */
+    background-image: linear-gradient(#e1d9c3 1px, transparent 1px);
+    background-size: 100% 25px;
+    /* Linhas do caderno */
+    border: 1px solid #d2c8ac;
+    box-shadow: inset 0px 0px 20px rgba(0, 0, 0, 0.1);
+}
+
+/* --- CSS: Lógica das Páginas Estáticas (P1 e P2) --- */
+.static-page {
+    position: absolute;
+    width: 48%;
+    /* Ligeiramente menor que a capa para realismo */
+    height: 96%;
+    top: 2%;
+    /* Centralizado verticalmente */
+    z-index: 2;
+    /* Acima da capa */
+    overflow: hidden;
+}
+
+.left-page {
+    left: 1%;
+    /* Margem da lombada */
+    border-radius: 5px 0 0 5px;
+}
+
+.right-page {
+    right: 1%;
+    /* Margem da lombada */
+    border-radius: 0 5px 5px 0;
+}
+
+/* --- CSS: Lógica da Página de Animação (Flipping Page) --- */
+.animated-page {
+    position: absolute;
+    width: 48%;
+    height: 96%;
+    top: 2%;
+    right: 1%;
+    /* Começa na posição da direita */
     transform-origin: left center;
-    transition: transform 0.8s cubic-bezier(0.645, 0.045, 0.355, 1);
+    /* Gira a partir da lombada */
     transform-style: preserve-3d;
-    pointer-events: none;
+    z-index: 10;
+    /* Z-index alto inicial durante a animação */
     display: none;
+    /* Escondida por padrão via JS */
+    transition: transform 1s cubic-bezier(0.645, 0.045, 0.355, 1);
+    /* Animação suave */
 }
 
-.flip-sheet.active {
-    display: block;
-}
-
-.flip-sheet.animate {
+/* Classe ativada pelo JS para virar para a esquerda (NEXT) */
+.animated-page.turn-next {
     transform: rotateY(-180deg);
 }
 
-.sheet-face {
+/* Classe ativada pelo JS para virar para a direita (PREV) - começa já virada */
+.animated-page.start-flipped {
+    transform: rotateY(-180deg);
+}
+
+/* E então removemos a rotação */
+.animated-page.turn-prev {
+    transform: rotateY(0deg);
+}
+
+
+/* Frente e Verso da página de animação */
+.animated-page .front,
+.animated-page .back {
     position: absolute;
     width: 100%;
     height: 100%;
     backface-visibility: hidden;
-    background: var(--page-bg);
-    /* Grade também na folha que vira para não ficar branca */
-    background-image:
-        linear-gradient(90deg, transparent 54px, var(--margin-red) 54px, var(--margin-red) 56px, transparent 56px),
-        repeating-linear-gradient(transparent 0px, transparent 30px, var(--line-color) 30px, var(--line-color) 31px);
+    /* Importante: esconde o verso quando a frente está visível e vice-versa */
+    -webkit-backface-visibility: hidden;
+    border-radius: 0 5px 5px 0;
 }
 
-.sheet-face.back {
+.animated-page .back {
     transform: rotateY(180deg);
-    background-color: #f9f9f9;
+    /* O verso deve estar rotacionado internamente */
+    border-radius: 5px 0 0 5px;
 }
 
-.page-title {
-    position: absolute;
-    top: 22px;
-    left: 65px;
-    color: var(--accent-color);
-    font-weight: 800;
-    text-transform: uppercase;
-    font-size: 1rem;
+/* --- CSS: Controles --- */
+.controls {
+    position: fixed;
+    bottom: 20px;
+    display: flex;
+    gap: 20px;
+    z-index: 100;
+}
+
+button {
+    padding: 10px 20px;
+    cursor: pointer;
+    background-color: #8b4513;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    transition: background 0.3s;
+}
+
+button:hover {
+    background-color: #a0522d;
+}
+
+button:disabled {
+    background-color: #555;
+    cursor: not-allowed;
 }

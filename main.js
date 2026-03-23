@@ -1,90 +1,137 @@
-let tasks = JSON.parse(localStorage.getItem('tasks_v7')) || [];
-let currentSpread = 0;
-const tasksPerPage = 13; // Cabe perfeitamente na grade
+// 1. "Database" de páginas.
+const pagesData = [
+    { title: "Capa Interna", tasks: ["Este é o lado esquerdo", "da capa."] }, // Índice 0 (Esquerda)
+    { title: "Mercado", tasks: ["Pão", "Leite", "Café"] }, // Índice 1 (Direita)
+    { title: "Anotações", tasks: ["Idéia de app novo", "Ligar para João"] }, // Índice 2 (Esquerda)
+    { title: "Fim", tasks: ["Última Página"] }, // Índice 3 (Direita)
+    { title: "Mais Tarefas", tasks: ["Página Extra 1", "Estudar"] }, // Índice 4 (Esquerda)
+    { title: "Conclusão", tasks: ["Acabou o caderno!"] } // Índice 5 (Direita)
+];
 
-function render() {
-    const leftContent = document.getElementById('leftContent');
-    const rightContent = document.getElementById('rightContent');
+// 2. Estado: Começamos mostrando o índice 0 na esquerda e 1 na direita.
+let currentLeftPageIndex = 0;
+let isAnimating = false;
 
-    // Página Esquerda
-    if (currentSpread === 0) {
-        document.getElementById('leftTitle').innerText = "Dashboard";
-        leftContent.innerHTML = `
-                    <div style="padding: 20px 20px 20px 65px; color: #555; font-size: 0.9rem;">
-                        <h2 style="color:#222; margin:0;">Meu Diário</h2>
-                        <p>Bem-vindo ao seu sistema de gestão. Use o campo acima para adicionar novas obrigações.</p>
-                        <p>O alinhamento agora é pixel-perfect.</p>
-                    </div>
-                `;
-    } else {
-        document.getElementById('leftTitle').innerText = `Lado A - Pág ${currentSpread * 2}`;
-        const start = (currentSpread - 1) * (tasksPerPage * 2) + tasksPerPage;
-        leftContent.innerHTML = generateListHtml(start, start + tasksPerPage) +
-            `<div class="nav-line" onclick="turnPage(-1)">« Voltar Anterior</div>`;
+// Referências DOM
+const htmlPageLeft = document.getElementById('page-left');
+const htmlPageRight = document.getElementById('page-right');
+const htmlAnimPage = document.getElementById('animated-page');
+const htmlAnimFront = document.getElementById('anim-front');
+const htmlAnimBack = document.getElementById('anim-back');
+const prevBtn = document.getElementById('prevBtn');
+const nextBtn = document.getElementById('nextBtn');
+
+// Função utilitária para gerar o HTML do conteúdo
+function generatePageHTML(data) {
+    if (!data) return '<div class="page-content"></div>'; // Página em branco
+    let tasksHTML = '';
+    if (data.tasks) {
+        tasksHTML = '<ul class="task-list">' + data.tasks.map(task => `<li>${task}</li>`).join('') + '</ul>';
     }
-
-    // Página Direita
-    const rightStart = currentSpread === 0 ? 0 : (currentSpread - 1) * (tasksPerPage * 2) + (tasksPerPage * 2);
-    document.getElementById('rightTitle').innerText = `Lado B - Pág ${currentSpread * 2 + 1}`;
-
-    let html = generateListHtml(rightStart, rightStart + tasksPerPage);
-    if (tasks.length > rightStart + tasksPerPage) {
-        html += `<div class="nav-line" onclick="turnPage(1)">Ver Próximas Páginas »</div>`;
-    }
-    rightContent.innerHTML = html;
-}
-
-function generateListHtml(start, end) {
-    const slice = tasks.slice(start, end);
-    return `<div class="task-list">` + slice.map((t, i) => `
-                <div class="task-item ${t.completed ? 'done' : ''}">
-                    <input type="checkbox" ${t.completed ? 'checked' : ''} onclick="toggleTask(${start + i})">
-                    <span>${t.text}</span>
-                    <span class="del-icon" onclick="deleteTask(${start + i})">×</span>
+    return `
+                <div class="page-content">
+                    <h2>${data.title}</h2>
+                    ${tasksHTML}
                 </div>
-            `).join('') + `</div>`;
+            `;
 }
 
-function turnPage(dir) {
-    const sheet = document.getElementById('flipSheet');
-    sheet.classList.add('active');
+// 3. Renderização Inicial
+function updateStaticPages() {
+    htmlPageLeft.innerHTML = generatePageHTML(pagesData[currentLeftPageIndex]);
+    htmlPageRight.innerHTML = generatePageHTML(pagesData[currentLeftPageIndex + 1]);
 
-    // Força o reflow para a animação funcionar
-    sheet.offsetHeight;
-
-    if (dir === 1) {
-        sheet.classList.add('animate');
-    } else {
-        // Se estiver voltando, começa virada e desvira
-        sheet.classList.add('animate');
-        sheet.offsetHeight;
-        sheet.classList.remove('animate');
-    }
-
-    // No meio da animação (0.4s), troca o conteúdo embaixo
-    setTimeout(() => {
-        currentSpread += dir;
-        render();
-    }, 400);
-
-    // Reseta a folha após a animação
-    setTimeout(() => {
-        sheet.classList.remove('active', 'animate');
-    }, 800);
+    // Gerenciar estado dos botões (agora pulando de 2 em 2)
+    prevBtn.disabled = currentLeftPageIndex <= 0;
+    nextBtn.disabled = currentLeftPageIndex >= pagesData.length - 2;
 }
 
-function addTask() {
-    const input = document.getElementById('taskInput');
-    if (input.value.trim()) {
-        tasks.push({ text: input.value, completed: false });
-        localStorage.setItem('tasks_v7', JSON.stringify(tasks));
-        input.value = '';
-        render();
-    }
+updateStaticPages();
+
+// =========================================
+// 4. LÓGICA DE ANIMAÇÃO "NEXT" (Pular 2 páginas)
+// =========================================
+function nextPage() {
+    if (isAnimating || currentLeftPageIndex >= pagesData.length - 2) return;
+    isAnimating = true;
+
+    const currentRightIndex = currentLeftPageIndex + 1;
+    // O SEGREDO ESTÁ AQUI: Avançamos 2 índices para revelar um par novo!
+    const newLeftIndex = currentLeftPageIndex + 2;
+    const newRightIndex = currentLeftPageIndex + 3;
+
+    // Frente da folha voando é a página direita atual
+    htmlAnimFront.innerHTML = generatePageHTML(pagesData[currentRightIndex]);
+
+    // Verso da folha voando é a NOVA página esquerda
+    htmlAnimBack.innerHTML = generatePageHTML(pagesData[newLeftIndex]);
+
+    // Página direita estática já recebe a NOVA página direita
+    htmlPageRight.innerHTML = generatePageHTML(pagesData[newRightIndex]);
+
+    htmlAnimPage.style.display = 'block';
+    htmlAnimPage.style.zIndex = 20;
+
+    void htmlAnimPage.offsetWidth;
+    htmlAnimPage.classList.add('turn-next');
+
+    htmlAnimPage.addEventListener('transitionend', function FunctionNextEnd() {
+        // Ao final, a página esquerda fixa recebe o que estava no verso voando
+        htmlPageLeft.innerHTML = htmlAnimBack.innerHTML;
+
+        htmlAnimPage.style.display = 'none';
+        htmlAnimPage.classList.remove('turn-next');
+        htmlAnimPage.style.zIndex = 10;
+
+        currentLeftPageIndex = newLeftIndex; // Atualiza o estado
+        updateStaticPages();
+
+        isAnimating = false;
+        htmlAnimPage.removeEventListener('transitionend', FunctionNextEnd);
+    });
 }
 
-function toggleTask(i) { tasks[i].completed = !tasks[i].completed; save(); render(); }
-function deleteTask(i) { tasks.splice(i, 1); save(); render(); }
-function save() { localStorage.setItem('tasks_v7', JSON.stringify(tasks)); }
+// =========================================
+// 5. LÓGICA DE ANIMAÇÃO "PREV" (Voltar 2 páginas)
+// =========================================
+function prevPage() {
+    if (isAnimating || currentLeftPageIndex <= 0) return;
+    isAnimating = true;
 
-render();
+    const currentLeftIndex = currentLeftPageIndex;
+    // O SEGREDO ESTÁ AQUI: Recuamos 2 índices para revelar o par anterior!
+    const newLeftIndex = currentLeftPageIndex - 2;
+    const newRightIndex = currentLeftPageIndex - 1;
+
+    // O verso da folha voando é a página esquerda atual
+    htmlAnimBack.innerHTML = generatePageHTML(pagesData[currentLeftIndex]);
+
+    // A frente da folha voando é a NOVA página direita
+    htmlAnimFront.innerHTML = generatePageHTML(pagesData[newRightIndex]);
+
+    htmlAnimPage.classList.add('start-flipped');
+    htmlAnimPage.style.display = 'block';
+    htmlAnimPage.style.zIndex = 20;
+
+    // Página esquerda estática já recebe a NOVA página esquerda
+    htmlPageLeft.innerHTML = generatePageHTML(pagesData[newLeftIndex]);
+
+    void htmlAnimPage.offsetWidth;
+
+    htmlAnimPage.classList.add('turn-prev');
+
+    htmlAnimPage.addEventListener('transitionend', function FunctionPrevEnd() {
+        // Ao final, a página direita fixa recebe o que estava na frente voando
+        htmlPageRight.innerHTML = htmlAnimFront.innerHTML;
+
+        htmlAnimPage.style.display = 'none';
+        htmlAnimPage.classList.remove('start-flipped', 'turn-prev');
+        htmlAnimPage.style.zIndex = 10;
+
+        currentLeftPageIndex = newLeftIndex; // Atualiza o estado
+        updateStaticPages();
+
+        isAnimating = false;
+        htmlAnimPage.removeEventListener('transitionend', FunctionPrevEnd);
+    });
+}
