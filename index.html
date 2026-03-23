@@ -4,39 +4,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TaskBook V1.0.0</title>
+    <title>TaskBook</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
-    <div class="input-container">
-        <input type="text" id="taskInput" placeholder="Nova tarefa...">
+    <div class="input-bar">
+        <input type="text" id="taskInput" placeholder="Sua próxima tarefa crítica...">
         <button class="add-btn" onclick="addTask()">Adicionar</button>
     </div>
 
-    <div class="scene">
-        <div class="notebook" id="notebook">
+    <div class="notebook-box">
+        <!-- Folha da Animação -->
+        <div class="flip-sheet" id="flipSheet">
+            <div class="sheet-face front"></div>
+            <div class="sheet-face back"></div>
+        </div>
 
-            <!-- Base traseira fixa -->
-            <div class="page cover-back" style="z-index: 0;"></div>
-
-            <!-- Páginas Dinâmicas -->
-            <div id="pages-container"></div>
-
-            <!-- Capa Dianteira -->
-            <div class="page cover-front" id="cover" onclick="toggleCover()">
-                <div class="page-face front">
-                    <h2>NOTEBOOK<br>TASKS</h2>
-                </div>
-                <div class="page-face back"></div>
+        <div class="notebook-inner">
+            <!-- Página Esquerda -->
+            <div class="page left">
+                <div class="page-title" id="leftTitle">Informações</div>
+                <div class="paper-grid" id="leftContent"></div>
             </div>
 
+            <!-- Página Direita -->
+            <div class="page right">
+                <div class="page-title" id="rightTitle">Tarefas</div>
+                <div class="paper-grid" id="rightContent"></div>
+            </div>
         </div>
-    </div>
-
-    <div class="nav">
-        <button class="nav-btn" id="prevBtn" onclick="prevPage()" disabled>ANTERIOR</button>
-        <button class="nav-btn" id="nextBtn" onclick="nextPage()" disabled>PRÓXIMA</button>
     </div>
 
     <script src="main.js"></script>

@@ -1,95 +1,90 @@
-let tasks = JSON.parse(localStorage.getItem('tasks_v3')) || [];
-let currentPage = -1; // -1 é fechado
-const limit = 13; // Tarefas por página
+let tasks = JSON.parse(localStorage.getItem('tasks_v7')) || [];
+let currentSpread = 0;
+const tasksPerPage = 13; // Cabe perfeitamente na grade
 
-function renderPages() {
-    const container = document.getElementById('pages-container');
-    container.innerHTML = '';
-    const total = Math.max(1, Math.ceil(tasks.length / limit));
+function render() {
+    const leftContent = document.getElementById('leftContent');
+    const rightContent = document.getElementById('rightContent');
 
-    for (let i = 0; i < total; i++) {
-        const page = document.createElement('div');
-        page.className = 'page';
-        page.id = `page-${i}`;
-        page.style.zIndex = total - i;
-
-        const start = i * limit;
-        const pageTasks = tasks.slice(start, start + limit);
-
-        page.innerHTML = `
-                    <div class="page-face front paper">
-                        <ul class="task-list">
-                            ${pageTasks.map((t, idx) => `
-                                <li class="task-item ${t.completed ? 'done' : ''}">
-                                    <input type="checkbox" ${t.completed ? 'checked' : ''} 
-                                        onclick="toggleTask(${start + idx})">
-                                    <span>${t.text}</span>
-                                </li>
-                            `).join('')}
-                        </ul>
-                    </div>
-                    <div class="page-face back paper" style="background-image: none; background-color: #f9f9f9;">
-                        <div style="padding: 60px; opacity: 0.2; font-size: 0.8rem;">Verso da página ${i + 1}</div>
+    // Página Esquerda
+    if (currentSpread === 0) {
+        document.getElementById('leftTitle').innerText = "Dashboard";
+        leftContent.innerHTML = `
+                    <div style="padding: 20px 20px 20px 65px; color: #555; font-size: 0.9rem;">
+                        <h2 style="color:#222; margin:0;">Meu Diário</h2>
+                        <p>Bem-vindo ao seu sistema de gestão. Use o campo acima para adicionar novas obrigações.</p>
+                        <p>O alinhamento agora é pixel-perfect.</p>
                     </div>
                 `;
-        container.appendChild(page);
+    } else {
+        document.getElementById('leftTitle').innerText = `Lado A - Pág ${currentSpread * 2}`;
+        const start = (currentSpread - 1) * (tasksPerPage * 2) + tasksPerPage;
+        leftContent.innerHTML = generateListHtml(start, start + tasksPerPage) +
+            `<div class="nav-line" onclick="turnPage(-1)">« Voltar Anterior</div>`;
     }
-    updateControls();
+
+    // Página Direita
+    const rightStart = currentSpread === 0 ? 0 : (currentSpread - 1) * (tasksPerPage * 2) + (tasksPerPage * 2);
+    document.getElementById('rightTitle').innerText = `Lado B - Pág ${currentSpread * 2 + 1}`;
+
+    let html = generateListHtml(rightStart, rightStart + tasksPerPage);
+    if (tasks.length > rightStart + tasksPerPage) {
+        html += `<div class="nav-line" onclick="turnPage(1)">Ver Próximas Páginas »</div>`;
+    }
+    rightContent.innerHTML = html;
 }
 
-function toggleCover() {
-    const cover = document.getElementById('cover');
-    if (currentPage === -1) {
-        cover.classList.add('flipped');
-        currentPage = 0;
-    } else if (currentPage === 0) {
-        // Se estiver na primeira página e clicar na capa (que está virada), ele fecha
-        // Mas vamos deixar os botões controlarem isso para evitar confusão
-    }
-    updateControls();
+function generateListHtml(start, end) {
+    const slice = tasks.slice(start, end);
+    return `<div class="task-list">` + slice.map((t, i) => `
+                <div class="task-item ${t.completed ? 'done' : ''}">
+                    <input type="checkbox" ${t.completed ? 'checked' : ''} onclick="toggleTask(${start + i})">
+                    <span>${t.text}</span>
+                    <span class="del-icon" onclick="deleteTask(${start + i})">×</span>
+                </div>
+            `).join('') + `</div>`;
 }
 
-function nextPage() {
-    const total = Math.ceil(tasks.length / limit) || 1;
-    if (currentPage < total - 1) {
-        document.getElementById(`page-${currentPage}`).classList.add('flipped');
-        currentPage++;
-    }
-    updateControls();
-}
+function turnPage(dir) {
+    const sheet = document.getElementById('flipSheet');
+    sheet.classList.add('active');
 
-function prevPage() {
-    if (currentPage > 0) {
-        currentPage--;
-        document.getElementById(`page-${currentPage}`).classList.remove('flipped');
-    } else if (currentPage === 0) {
-        document.getElementById('cover').classList.remove('flipped');
-        currentPage = -1;
+    // Força o reflow para a animação funcionar
+    sheet.offsetHeight;
+
+    if (dir === 1) {
+        sheet.classList.add('animate');
+    } else {
+        // Se estiver voltando, começa virada e desvira
+        sheet.classList.add('animate');
+        sheet.offsetHeight;
+        sheet.classList.remove('animate');
     }
-    updateControls();
+
+    // No meio da animação (0.4s), troca o conteúdo embaixo
+    setTimeout(() => {
+        currentSpread += dir;
+        render();
+    }, 400);
+
+    // Reseta a folha após a animação
+    setTimeout(() => {
+        sheet.classList.remove('active', 'animate');
+    }, 800);
 }
 
 function addTask() {
-    const val = document.getElementById('taskInput').value.trim();
-    if (val) {
-        tasks.push({ text: val, completed: false });
-        localStorage.setItem('tasks_v3', JSON.stringify(tasks));
-        document.getElementById('taskInput').value = '';
-        renderPages();
-        if (currentPage === -1) toggleCover();
+    const input = document.getElementById('taskInput');
+    if (input.value.trim()) {
+        tasks.push({ text: input.value, completed: false });
+        localStorage.setItem('tasks_v7', JSON.stringify(tasks));
+        input.value = '';
+        render();
     }
 }
 
-function toggleTask(idx) {
-    tasks[idx].completed = !tasks[idx].completed;
-    localStorage.setItem('tasks_v3', JSON.stringify(tasks));
-    renderPages();
-}
+function toggleTask(i) { tasks[i].completed = !tasks[i].completed; save(); render(); }
+function deleteTask(i) { tasks.splice(i, 1); save(); render(); }
+function save() { localStorage.setItem('tasks_v7', JSON.stringify(tasks)); }
 
-function updateControls() {
-    const total = Math.ceil(tasks.length / limit) || 1;
-    document.getElementById('prevBtn').disabled = (currentPage === -1);
-    document.getElementById('nextBtn').disabled = (currentPage >= total - 1 || currentPage === -1);
-}
-
-renderPages();
+render();

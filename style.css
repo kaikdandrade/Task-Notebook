@@ -1,11 +1,12 @@
 :root {
-    --bg-color: #121212;
-    --accent-color: #e5c05b;
+    --bg-color: #0d0d0d;
+    --accent-color: #d4af37;
     --page-bg: #fffdf5;
     --line-color: #d1e4f0;
     --margin-red: #ff8585;
     --text-color: #2c3e50;
-    --line-height: 30px;
+    --lh: 31px;
+    /* Altura exata da linha */
 }
 
 body {
@@ -15,127 +16,93 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    margin: 0;
-    padding: 20px;
+    justify-content: center;
     min-height: 100vh;
+    margin: 0;
     overflow: hidden;
-    user-select: none;
-    /* Evita selecionar texto ao clicar rápido */
 }
 
 /* Input Superior */
-.input-container {
+.input-bar {
     margin-bottom: 30px;
-    z-index: 100;
     display: flex;
-    background: #1e1e1e;
-    padding: 8px;
-    border-radius: 50px;
+    background: #1a1a1a;
+    padding: 10px;
+    border-radius: 12px;
     border: 1px solid #333;
+    z-index: 1000;
 }
 
 input {
     background: transparent;
     border: none;
     color: white;
-    padding: 10px 20px;
+    padding: 10px 15px;
     width: 250px;
     outline: none;
+    font-family: inherit;
 }
 
 .add-btn {
     background: var(--accent-color);
     border: none;
-    padding: 10px 25px;
-    border-radius: 50px;
-    font-weight: 700;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: 800;
     cursor: pointer;
     text-transform: uppercase;
-    font-size: 0.8rem;
 }
 
-/* Cena 3D */
-.scene {
+/* Container do Caderno */
+.notebook-box {
     perspective: 2500px;
-    width: 400px;
-    height: 520px;
+    width: 920px;
+    height: 580px;
     position: relative;
 }
 
-.notebook {
+.notebook-inner {
     width: 100%;
     height: 100%;
-    position: relative;
-    transform-style: preserve-3d;
-    transition: transform 1.2s cubic-bezier(0.4, 0, 0.2, 1);
-    transform: rotateX(10deg);
-}
-
-/* Páginas e Capas - Correção da Barra Preta */
-.page {
-    width: 100%;
-    height: 100%;
-    position: absolute;
-    transform-origin: left center;
-    transition: transform 1.2s cubic-bezier(0.4, 0, 0.2, 1);
-    transform-style: preserve-3d;
-    border-radius: 0 12px 12px 0;
-    left: 0;
-    /* Garante que todos partam do mesmo ponto */
-}
-
-.page-face {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    backface-visibility: hidden;
-    border-radius: 0 12px 12px 0;
-    overflow: hidden;
-    /* Efeito de lombada para esconder o vão */
-    box-shadow: inset 15px 0 20px -10px rgba(0, 0, 0, 0.2);
-}
-
-.page-face.back {
-    transform: rotateY(180deg);
-    background: var(--page-bg);
-    border-radius: 12px 0 0 12px;
-    box-shadow: inset -15px 0 20px -10px rgba(0, 0, 0, 0.2);
-}
-
-/* Capas */
-.cover-front {
-    background: linear-gradient(135deg, #252525, #000);
-    z-index: 10;
     display: flex;
-    align-items: center;
-    justify-content: center;
-    border-left: 2px solid #333;
-    /* Simula a dobra do couro */
+    background: #222;
+    padding: 10px;
+    border-radius: 8px;
+    box-shadow: 0 40px 80px rgba(0, 0, 0, 0.8);
+    position: relative;
+    transform-style: preserve-3d;
 }
 
-.cover-front h2 {
-    color: var(--accent-color);
-    border: 2px solid var(--accent-color);
-    padding: 20px;
-    letter-spacing: 4px;
-    pointer-events: none;
-}
-
-.cover-back {
-    background: #000;
-    transform: translateZ(-5px);
-    border-radius: 0 12px 12px 0;
-}
-
-/* Papel Sincronizado */
-.paper {
+/* Páginas Esquerda e Direita */
+.page {
+    flex: 1;
     background-color: var(--page-bg);
-    background-image:
-        linear-gradient(90deg, transparent 44px, var(--margin-red) 44px, var(--margin-red) 46px, transparent 46px),
-        linear-gradient(var(--line-color) 1px, transparent 1px);
-    background-size: 100% 100%, 100% var(--line-height);
-    padding: 60px 0 20px 0;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.05);
+}
+
+.page.left {
+    border-radius: 4px 0 0 4px;
+    border-right: 1px solid #e0e0e0;
+}
+
+.page.right {
+    border-radius: 0 4px 4px 0;
+    border-left: 1px solid #e0e0e0;
+}
+
+/* GRADE DE PRECISÃO - O segredo do alinhamento */
+.paper-grid {
+    width: 100%;
     height: 100%;
+    background-image:
+        linear-gradient(90deg, transparent 54px, var(--margin-red) 54px, var(--margin-red) 56px, transparent 56px),
+        repeating-linear-gradient(transparent 0px, transparent 30px, var(--line-color) 30px, var(--line-color) 31px);
+    padding-top: 62px;
+    /* Pula exatamente 2 linhas */
     box-sizing: border-box;
 }
 
@@ -143,139 +110,114 @@ input {
     list-style: none;
     padding: 0;
     margin: 0;
-}
-
-.task-item {
-    height: var(--line-height);
-    display: flex;
-    align-items: center;
-    padding: 0 20px 0 55px;
-    color: var(--text-color);
-    font-size: 0.9rem;
-    position: relative;
-    transition: background 0.2s;
-}
-
-.task-item:hover {
-    background: rgba(229, 192, 91, 0.05);
-}
-
-.task-item input {
-    width: 16px;
-    height: 16px;
-    margin-right: 12px;
-    padding: 0;
-    accent-color: var(--text-color);
-    cursor: pointer;
-}
-
-/* Lixeira sutil no hover */
-.delete-hint {
-    position: absolute;
-    right: 15px;
-    opacity: 0;
-    cursor: pointer;
-    font-size: 0.7rem;
-    color: var(--margin-red);
-    transition: 0.2s;
-}
-
-.task-item:hover .delete-hint {
-    opacity: 1;
-}
-
-/* MENU DE CONTEXTO (ESTILO POST-IT) */
-#customMenu {
-    position: fixed;
-    display: none;
-    z-index: 1000;
-    background: #feff9c;
-    /* Amarelo Post-it */
-    color: #333;
-    padding: 10px;
-    box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.3);
-    border-radius: 2px;
-    font-size: 0.8rem;
-    font-weight: 600;
-    cursor: pointer;
-    transform: rotate(2deg);
-    border-bottom-right-radius: 15px 3px;
-}
-
-#customMenu:hover {
-    background: #fff000;
-    transform: rotate(0deg) scale(1.05);
-}
-
-.nav {
-    margin-top: 30px;
-    display: flex;
-    gap: 15px;
-}
-
-.nav-btn {
-    background: #222;
-    border: 1px solid #444;
-    color: #888;
-    padding: 8px 25px;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 0.7rem;
-    font-weight: 700;
-}
-
-.nav-btn:hover:not(:disabled) {
-    color: var(--accent-color);
-    border-color: var(--accent-color);
-}
-
-.nav-btn:disabled {
-    opacity: 0.2;
-}
-
-.flipped {
-    transform: rotateY(-179deg);
-}
-
-/* ... (estilos básicos do post anterior) ... */
-
-.anim-sheet {
-    display: none;
-    /* Escondida por padrão */
-    z-index: 100;
-    transform-origin: left center;
-}
-
-.anim-sheet.active {
     display: block;
 }
 
-/* Estado final da animação (Virar para a esquerda) */
-.flip-left {
-    animation: flipToLeft 0.8s forwards cubic-bezier(0.645, 0.045, 0.355, 1);
+.task-item {
+    height: var(--lh);
+    /* 31px */
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    /* Alinha à esquerda */
+    padding: 0 20px 0 65px;
+    /* Começa depois da margem vermelha */
+    color: var(--text-color);
+    font-size: 0.95rem;
+    position: relative;
+    white-space: nowrap;
 }
 
-@keyframes flipToLeft {
-    from {
-        transform: rotateY(0deg);
-    }
-
-    to {
-        transform: rotateY(-180deg);
-    }
+.task-item input[type="checkbox"] {
+    margin-right: 12px;
+    accent-color: var(--accent-color);
+    cursor: pointer;
+    width: 16px;
+    height: 16px;
 }
 
-/* Estado final da animação (Virar para a direita) */
-.flip-right {
-    animation: flipToRight 0.8s forwards cubic-bezier(0.645, 0.045, 0.355, 1);
+.task-item.done span {
+    text-decoration: line-through;
+    opacity: 0.4;
 }
 
-@keyframes flipToRight {
-    from {
-        transform: rotateY(-180deg);
-    }
+/* Botão Deletar melhorado */
+.del-icon {
+    margin-left: auto;
+    color: var(--margin-red);
+    font-weight: bold;
+    cursor: pointer;
+    font-size: 1.2rem;
+    opacity: 0;
+    transition: 0.2s;
+    padding: 0 5px;
+}
 
-    to {
-        transform: rotateY(0deg);
-    }
+.task-item:hover .del-icon {
+    opacity: 1;
+}
+
+/* Botões de Navegação nas Linhas */
+.nav-line {
+    height: var(--lh);
+    padding-left: 65px;
+    display: flex;
+    align-items: center;
+    color: var(--accent-color);
+    font-weight: 800;
+    font-size: 0.75rem;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* ANIMAÇÃO DE VIRADA (FLIP) CORRIGIDA */
+.flip-sheet {
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    /* Começa no eixo central */
+    width: 450px;
+    height: 560px;
+    z-index: 500;
+    transform-origin: left center;
+    transition: transform 0.8s cubic-bezier(0.645, 0.045, 0.355, 1);
+    transform-style: preserve-3d;
+    pointer-events: none;
+    display: none;
+}
+
+.flip-sheet.active {
+    display: block;
+}
+
+.flip-sheet.animate {
+    transform: rotateY(-180deg);
+}
+
+.sheet-face {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden;
+    background: var(--page-bg);
+    /* Grade também na folha que vira para não ficar branca */
+    background-image:
+        linear-gradient(90deg, transparent 54px, var(--margin-red) 54px, var(--margin-red) 56px, transparent 56px),
+        repeating-linear-gradient(transparent 0px, transparent 30px, var(--line-color) 30px, var(--line-color) 31px);
+}
+
+.sheet-face.back {
+    transform: rotateY(180deg);
+    background-color: #f9f9f9;
+}
+
+.page-title {
+    position: absolute;
+    top: 22px;
+    left: 65px;
+    color: var(--accent-color);
+    font-weight: 800;
+    text-transform: uppercase;
+    font-size: 1rem;
 }
