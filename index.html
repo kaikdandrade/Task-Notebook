@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Task Notebook</title>
+    <title data-lang="title" data-version></title>
     <link rel="stylesheet" href="style.css">
 </head>
 
@@ -21,7 +21,7 @@
                 <!-- Abaixo fica o que é exibido na capa do caderno -->
                 <div class="card back">
                     <div class="cover-outer">
-                        <div class="cover-title">Task Notebook</div>
+                        <div class="cover-title" data-lang="notebook/title/start"></div>
                     </div>
                 </div>
             </div>
@@ -34,7 +34,7 @@
                 <!-- Abaixo fica o que é exibido na capa de trás do caderno -->
                 <div class="card back">
                     <div class="cover-outer">
-                        <div class="cover-title">Task Notebook</div>
+                        <div class="cover-title" data-lang="notebook/title/end"></div>
                     </div>
                 </div>
             </div>
@@ -52,10 +52,12 @@
     </div>
 
     <div class="controls">
-        <button id="prevBtn" onclick="handlePrev()">Anterior</button>
-        <button id="nextBtn" onclick="handleNext()">Abrir Caderno</button>
+        <!-- <button id="openBtn" data-lang="controls/btn/open"></button> -->
+        <button id="prevBtn" onclick="handlePrev()" data-lang="controls/btn/prev"></button>
+        <button id="nextBtn" onclick="handleNext()" data-lang="controls/btn/next"></button>
     </div>
 
+    <script src="languages.js"></script>
     <script src="main.js"></script>
 </body>
 

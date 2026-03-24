@@ -1,11 +1,11 @@
 // --- DADOS ---
 const pagesData = [
-    { title: "Capa Interna", tasks: ["Este é o lado esquerdo", "da capa."] },
-    { title: "Mercado", tasks: ["Pão", "Leite", "Café"] },
-    { title: "Anotações", tasks: ["Idéia de app novo", "Ligar para João"] },
-    { title: "Trabalho", tasks: ["Reunião às 14h", "Enviar relatório"] },
-    { title: "Mais Tarefas", tasks: ["Página Extra", "Estudar JavaScript"] },
-    { title: "Conclusão", tasks: ["Última página antes", "da contra-capa!"] }
+    { title: "Inside Cover", tasks: ["This is the left side", "of the cover."] },
+    { title: "Market", tasks: ["Bread", "Milk", "Coffee"] },
+    { title: "Notes", tasks: ["New app idea", "Call João"] },
+    { title: "Work", tasks: ["Meeting at 2 PM", "Send report"] },
+    { title: "More Tasks", tasks: ["Extra Page", "Study JavaScript"] },
+    { title: "Conclusion", tasks: ["Last page before", "the back cover!"] }
 ];
 
 // const tasks = [
