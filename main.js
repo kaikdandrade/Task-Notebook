@@ -8,17 +8,28 @@ const pagesData = [
     { title: "Conclusão", tasks: ["Última página antes", "da contra-capa!"] }
 ];
 
+// const tasks = [
+//     { name: 'Comprar pão', completed: false },
+//     { name: 'Tomar café', completed: false },
+//     {name: 'Lavar louça', completed: false },
+//     { name: 'Enviar relatório', completed: false },
+//     { name: 'Estudar JavaScript', completed: false },
+//     { name: 'Ligar para João', completed: false },
+//     { name: 'Reunião às 14h', completed: false },
+//     { name: 'Projetar app novo', completed: false }
+// ]; 
+
 let bookState = 'CLOSED_FRONT';
 let currentLeftPageIndex = 0;
 let isAnimating = false;
 
 // DOM
 const notebookEl = document.getElementById('notebook');
-const leftSideEl = document.getElementById('left-side');
-const rightSideEl = document.getElementById('right-side');
-const htmlPageLeft = document.getElementById('page-left');
-const htmlPageRight = document.getElementById('page-right');
-const htmlAnimPage = document.getElementById('animated-page');
+const leftSideEl = document.getElementById('page-left');
+const rightSideEl = document.getElementById('page-right');
+const htmlPageLeft = document.getElementById('sheet-left');
+const htmlPageRight = document.getElementById('sheet-right');
+const htmlAnimPage = document.getElementById('animated');
 const htmlAnimFront = document.getElementById('anim-front');
 const htmlAnimBack = document.getElementById('anim-back');
 const prevBtn = document.getElementById('prevBtn');
