@@ -1,9 +1,9 @@
+/* --- CSS: Base --- */
 * {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
     font-family: 'Courier New', Courier, monospace;
-    /* Fonte de máquina de escrever para realismo */
 }
 
 body {
@@ -11,15 +11,13 @@ body {
     justify-content: center;
     align-items: center;
     min-height: 100vh;
-    background-color: #333;
-    /* Fundo escuro para destacar o caderno */
+    background-color: #2a2a2a;
     overflow: hidden;
 }
 
-/* --- CSS: Estrutura do Caderno --- */
+/* --- CSS: Cenário 3D --- */
 .notebook-container {
-    perspective: 2000px;
-    /* Crucial para o efeito 3D */
+    perspective: 2500px;
     width: 900px;
     height: 600px;
     position: relative;
@@ -30,38 +28,164 @@ body {
     height: 100%;
     position: relative;
     transform-style: preserve-3d;
-    transition: transform 0.5s ease;
-    /* Centraliza o caderno ligeiramente para compensar a lombada */
-    transform: translateX(0%);
+    transform: rotateX(0deg) rotateY(0deg) translateX(0);
+    transition: transform 1s cubic-bezier(0.645, 0.045, 0.355, 1);
 }
 
-/* Capa do Caderno */
-.cover {
+.notebook.closed-front {
+    transform: rotateX(0deg) rotateY(0deg) translateX(-25%);
+}
+
+.notebook.closed-back {
+    transform: rotateX(0deg) rotateY(0deg) translateX(25%);
+}
+
+/* Lombada */
+.spine {
+    position: absolute;
+    left: 50%;
+    top: 0;
+    height: 100%;
+    width: 30px;
+    transform: translateX(-50%) translateZ(-5px);
+    background: #4a2508;
+    border-radius: 4px;
+    box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.8);
+}
+
+/* --- CSS: Estrutura dos Lados --- */
+.side,
+.animated-page {
     position: absolute;
     width: 50%;
     height: 100%;
-    background-color: #8b4513;
-    /* Cor marrom couro */
-    border-radius: 10px 0 0 10px;
-    box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.5);
     top: 0;
+    transform-style: preserve-3d;
+    transition: transform 1s cubic-bezier(0.645, 0.045, 0.355, 1);
+}
+
+.card-face {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+}
+
+.face-front {
+    transform: translateZ(1px);
+}
+
+.face-back {
+    transform: rotateY(180deg) translateZ(1px);
+}
+
+/* Lados */
+.left-side {
     left: 0;
-    z-index: 1;
-    /* Capa fica no fundo */
+    transform-origin: right center;
+    transform: translateZ(0deg) rotateY(0deg);
 }
 
-.cover-right {
-    left: 50%;
+.left-side.is-closed {
+    transform: translateZ(4px) rotateY(180deg);
+}
+
+.right-side {
+    right: 0;
+    transform-origin: left center;
+    transform: translateZ(0deg) rotateY(0deg);
+}
+
+.right-side.is-closed {
+    transform: translateZ(4px) rotateY(-180deg);
+}
+
+/* --- CSS: Capas --- */
+.cover-inner,
+.cover-outer {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    background-color: #8b4513;
+    box-shadow: 0px 5px 20px rgba(0, 0, 0, 0.5);
+    border-radius: 5px;
+}
+
+.cover-outer {
+    background-color: #61310a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid #3e1f06;
+}
+
+.left-side .cover-inner {
+    border-radius: 10px 0 0 10px;
+}
+
+.left-side .cover-outer {
+    border-radius: 10px 0 0 10px;
+}
+
+.right-side .cover-inner {
     border-radius: 0 10px 10px 0;
-    background-color: #a0522d;
-    /* Tom ligeiramente diferente para variação */
 }
 
-/* --- CSS: Estilização das Páginas (Folhas) --- */
+.right-side .cover-outer {
+    border-radius: 0 10px 10px 0;
+}
+
+.cover-title {
+    color: #d2c8ac;
+    font-size: 38px;
+    font-weight: bold;
+    border: 3px solid #d2c8ac;
+    padding: 20px 40px;
+    border-radius: 5px;
+    text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.5);
+}
+
+/* --- CSS: Folhas Estáticas e de Animação (O SEGREDO DO MEIO ESTÁ AQUI) --- */
+.sheet {
+    background-color: #fdfcf0;
+    background-image: linear-gradient(#e1d9c3 1px, transparent 1px);
+    background-size: 100% 25px;
+    position: absolute;
+    /* Largura aumentada de 96% para 98% para encostar exatamente no centro */
+    width: 98%;
+    height: 96%;
+    top: 2%;
+    border-radius: 5px;
+    border: 1px solid #d2c8ac;
+}
+
+/* Lado esquerdo: Colado no centro (right: 0) */
+.page-left,
+.anim-back {
+    right: 0;
+    border-radius: 5px 0 0 5px;
+    /* A linha divisória: */
+    border-right: 1px solid #a89f8a;
+    /* Sombra interna para dar a impressão de profundidade na dobra */
+    box-shadow: inset 0px 0px 15px rgba(0, 0, 0, 0.03), inset -15px 0px 15px rgba(0, 0, 0, 0.05);
+}
+
+/* Lado direito: Colado no centro (left: 0) */
+.page-right,
+.anim-front {
+    left: 0;
+    border-radius: 0 5px 5px 0;
+    border-left: none;
+    /* Sem borda para não ficar grosso */
+    /* Sombra interna para dar a impressão de profundidade na dobra */
+    box-shadow: inset 0px 0px 15px rgba(0, 0, 0, 0.03), inset 15px 0px 15px rgba(0, 0, 0, 0.05);
+}
+
 .page-content {
     padding: 40px;
-    line-height: 1.6;
     color: #333;
+    line-height: 1.6;
 }
 
 .page-content h2 {
@@ -80,7 +204,6 @@ body {
     padding-left: 30px;
 }
 
-/* Quadrado do checkbox simulado */
 .task-list li::before {
     content: '';
     position: absolute;
@@ -91,120 +214,58 @@ body {
     border: 1px solid #333;
 }
 
-/* Estilo base de folha de papel */
-.sheet {
-    background-color: #fdfcf0;
-    /* Cor creme papel */
-    background-image: linear-gradient(#e1d9c3 1px, transparent 1px);
-    background-size: 100% 25px;
-    /* Linhas do caderno */
-    border: 1px solid #d2c8ac;
-    box-shadow: inset 0px 0px 20px rgba(0, 0, 0, 0.1);
-}
-
-/* --- CSS: Lógica das Páginas Estáticas (P1 e P2) --- */
-.static-page {
-    position: absolute;
-    width: 48%;
-    /* Ligeiramente menor que a capa para realismo */
-    height: 96%;
-    top: 2%;
-    /* Centralizado verticalmente */
-    z-index: 2;
-    /* Acima da capa */
-    overflow: hidden;
-}
-
-.left-page {
-    left: 1%;
-    /* Margem da lombada */
-    border-radius: 5px 0 0 5px;
-}
-
-.right-page {
-    right: 1%;
-    /* Margem da lombada */
-    border-radius: 0 5px 5px 0;
-}
-
-/* --- CSS: Lógica da Página de Animação (Flipping Page) --- */
+/* --- CSS: A Folha que Voa --- */
 .animated-page {
-    position: absolute;
-    width: 48%;
-    height: 96%;
-    top: 2%;
-    right: 1%;
-    /* Começa na posição da direita */
+    left: 50%;
     transform-origin: left center;
-    /* Gira a partir da lombada */
-    transform-style: preserve-3d;
-    z-index: 10;
-    /* Z-index alto inicial durante a animação */
     display: none;
-    /* Escondida por padrão via JS */
-    transition: transform 1s cubic-bezier(0.645, 0.045, 0.355, 1);
-    /* Animação suave */
+    transform: translateZ(2px) rotateY(0deg);
 }
 
-/* Classe ativada pelo JS para virar para a esquerda (NEXT) */
 .animated-page.turn-next {
-    transform: rotateY(-180deg);
+    transform: translateZ(2px) rotateY(-180deg);
 }
 
-/* Classe ativada pelo JS para virar para a direita (PREV) - começa já virada */
 .animated-page.start-flipped {
-    transform: rotateY(-180deg);
+    transform: translateZ(2px) rotateY(-180deg);
 }
 
-/* E então removemos a rotação */
 .animated-page.turn-prev {
-    transform: rotateY(0deg);
-}
-
-
-/* Frente e Verso da página de animação */
-.animated-page .front,
-.animated-page .back {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    backface-visibility: hidden;
-    /* Importante: esconde o verso quando a frente está visível e vice-versa */
-    -webkit-backface-visibility: hidden;
-    border-radius: 0 5px 5px 0;
-}
-
-.animated-page .back {
-    transform: rotateY(180deg);
-    /* O verso deve estar rotacionado internamente */
-    border-radius: 5px 0 0 5px;
+    transform: translateZ(2px) rotateY(0deg);
 }
 
 /* --- CSS: Controles --- */
 .controls {
     position: fixed;
-    bottom: 20px;
+    bottom: 30px;
     display: flex;
     gap: 20px;
     z-index: 100;
 }
 
 button {
-    padding: 10px 20px;
+    padding: 12px 25px;
     cursor: pointer;
     background-color: #8b4513;
     color: white;
-    border: none;
+    border: 2px solid #5a2e0a;
     border-radius: 5px;
+    font-weight: bold;
     font-size: 16px;
-    transition: background 0.3s;
+    transition: 0.3s;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
 }
 
 button:hover {
     background-color: #a0522d;
+    transform: translateY(-2px);
 }
 
 button:disabled {
     background-color: #555;
+    border-color: #333;
     cursor: not-allowed;
+    opacity: 0.5;
+    transform: none;
+    box-shadow: none;
 }

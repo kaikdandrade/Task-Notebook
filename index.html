@@ -10,30 +10,47 @@
 
 <body>
     <div class="notebook-container">
-        <div class="notebook" id="notebook">
+        <div class="notebook closed-front" id="notebook">
+            <div class="spine"></div>
 
-            <div class="cover cover-left"></div>
-            <div class="cover cover-right"></div>
-
-            <div class="static-page left-page sheet" id="page-left">
-            </div>
-
-            <div class="animated-page sheet" id="animated-page">
-                <div class="front" id="anim-front">
+            <div class="side left-side is-closed" id="left-side">
+                <div class="card-face face-front">
+                    <div class="cover-inner"></div>
+                    <div class="sheet page-left" id="page-left"></div>
                 </div>
-                <div class="back" id="anim-back">
+                <div class="card-face face-back">
+                    <div class="cover-outer">
+                        <div class="cover-title">MY TASKS</div>
+                    </div>
                 </div>
             </div>
 
-            <div class="static-page right-page sheet" id="page-right">
+            <div class="side right-side" id="right-side">
+                <div class="card-face face-front">
+                    <div class="cover-inner"></div>
+                    <div class="sheet page-right" id="page-right"></div>
+                </div>
+                <div class="card-face face-back">
+                    <div class="cover-outer">
+                        <div class="cover-title">THE END</div>
+                    </div>
+                </div>
             </div>
 
+            <div class="animated-page" id="animated-page">
+                <div class="card-face face-front">
+                    <div class="sheet anim-front" id="anim-front"></div>
+                </div>
+                <div class="card-face face-back">
+                    <div class="sheet anim-back" id="anim-back"></div>
+                </div>
+            </div>
         </div>
     </div>
 
     <div class="controls">
-        <button id="prevBtn" onclick="prevPage()">Anterior</button>
-        <button id="nextBtn" onclick="nextPage()">Próximo</button>
+        <button id="prevBtn" onclick="handlePrev()">Anterior</button>
+        <button id="nextBtn" onclick="handleNext()">Abrir Caderno</button>
     </div>
 
     <script src="main.js"></script>
