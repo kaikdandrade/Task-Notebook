@@ -10,10 +10,10 @@
 
 <body>
     <div class="notebook-container">
-        <div class="notebook closed-front" id="notebook">
+        <div class="notebook">
             <div class="spine"></div> <!-- Lombada do caderno -->
 
-            <div class="page left is-closed" id="page-left">
+            <section class="page left" id="page-left">
                 <div class="card front">
                     <div class="cover-inner"></div>
                     <div class="sheet" id="sheet-left"></div>
@@ -21,12 +21,16 @@
                 <!-- Abaixo fica o que é exibido na capa do caderno -->
                 <div class="card back">
                     <div class="cover-outer">
-                        <div class="cover-title" data-lang="notebook/title/start"></div>
+                        <div class="cover-title">
+                            <h1 data-lang="notebook/title/start"></h1>
+                        </div>
+                        <button id="openBtn" onclick="handleBookInteraction('toggle')" class="btn"
+                            data-lang="notebook/controls/btn/toggle"></button>
                     </div>
                 </div>
-            </div>
+            </section>
 
-            <div class="page right" id="page-right">
+            <section class="page right" id="page-right">
                 <div class="card front">
                     <div class="cover-inner"></div>
                     <div class="sheet" id="sheet-right"></div>
@@ -34,27 +38,25 @@
                 <!-- Abaixo fica o que é exibido na capa de trás do caderno -->
                 <div class="card back">
                     <div class="cover-outer">
-                        <div class="cover-title" data-lang="notebook/title/end"></div>
+                        <div class="cover-title">
+                            <h3 data-lang="notebook/title/end"></h3>
+                        </div>
+                        <button id="openBtn" onclick="handleBookInteraction('toggle')" class="btn"
+                            data-lang="notebook/controls/btn/toggle"></button>
                     </div>
                 </div>
-            </div>
+            </section>
 
             <!-- Página de animação do caderno -->
-            <div class="page animated" id="animated">
+            <section class="page animated" id="animated">
                 <div class="card front">
                     <div class="sheet anim front" id="anim-front"></div>
                 </div>
                 <div class="card back">
                     <div class="sheet anim back" id="anim-back"></div>
                 </div>
-            </div>
+            </section>
         </div>
-    </div>
-
-    <div class="controls">
-        <!-- <button id="openBtn" data-lang="controls/btn/open"></button> -->
-        <button id="prevBtn" onclick="handlePrev()" data-lang="controls/btn/prev"></button>
-        <button id="nextBtn" onclick="handleNext()" data-lang="controls/btn/next"></button>
     </div>
 
     <script src="languages.js"></script>
