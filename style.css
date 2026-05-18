@@ -1,7 +1,9 @@
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&family=Newsreader:ital,opsz,wght@0,6..72,200..800;1,6..72,200..800&display=swap');
 
 :root {
-    --notebook-height: 550px;
+    --notebook-width: 830px;
+    --notebook-height: 572px;
+    /* 22 * 26 */
     --notebook-line-count: 22;
     --notebook-line-height: calc(var(--notebook-height) / var(--notebook-line-count) - 1.1px);
     --notebook-line-color: #8884;
@@ -35,7 +37,7 @@ h3,
 h4,
 h5,
 h6 {
-    font-family: "Newsreader", serif;
+    font-family: "Newsreader", sans-serif;
 }
 
 .disabled {
@@ -45,7 +47,7 @@ h6 {
 .notebook-container {
     position: relative;
     perspective: 2500px;
-    width: 800px;
+    width: var(--notebook-width);
     height: var(--notebook-height);
 
     .notebook {
@@ -62,20 +64,6 @@ h6 {
 
         &.closed-back {
             transform: rotateX(0deg) rotateY(0deg) translateX(25%);
-        }
-
-        .spine {
-            position: absolute;
-            left: 50%;
-            top: -1px;
-
-            width: 30px;
-            height: calc(var(--notebook-height) + 2px);
-            background: var(--notebook-cover-color);
-            border-top-left-radius: 4px;
-            border-bottom-left-radius: 4px;
-            box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.8);
-            transform: translateX(-50%) translateZ(-5px);
         }
 
         .page {
@@ -127,6 +115,33 @@ h6 {
                     .cover-outer {
                         border-top-right-radius: 10px;
                         border-bottom-right-radius: 10px;
+
+                         /* Textura e iluminação simulando o coura da capa */
+                        background-image:
+                            /* Sombra da lombada */
+                            linear-gradient(to right,
+                                rgba(0, 0, 0, 0.8) 0%,
+                                rgba(0, 0, 0, 0.2) 3%,
+                                rgba(255, 255, 255, 0.1) 5%,
+                                rgba(0, 0, 0, 0.1) 7%,
+                                transparent 12%),
+
+                            /* Costura da lombada */
+                            linear-gradient(to right,
+                                transparent 9%,
+                                rgba(0, 0, 0, 0.6) 9.5%,
+                                rgba(255, 255, 255, 0.15) 10%,
+                                transparent 10.5%),
+
+                            /* Escurecimento das bordas (para efeito de desgaste) */
+                            radial-gradient(circle at 50% 50%, transparent 55%, rgba(0, 0, 0, 0.5) 100%),
+
+                            /* Textura física do couro (Ruído fractal via SVG embutido) */
+                            url('data:image/svg+xml;utf8,<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"><filter id="noise"><feTurbulence type="fractalNoise" baseFrequency="1.2" numOctaves="3" stitchTiles="stitch"/></filter><rect width="100%" height="100%" filter="url(%23noise)" opacity="0.5"/></svg>');
+
+                        .selector-lang {
+                            left: 50px;
+                        }
                     }
 
                     .sheet {
@@ -156,6 +171,33 @@ h6 {
                     .cover-outer {
                         border-top-left-radius: 10px;
                         border-bottom-left-radius: 10px;
+
+                         /* Textura e iluminação simulando o coura da capa */
+                        background-image:
+                            /* Sombra da lombada */
+                            linear-gradient(to left,
+                                rgba(0, 0, 0, 0.8) 0%,
+                                rgba(0, 0, 0, 0.2) 3%,
+                                rgba(255, 255, 255, 0.1) 5%,
+                                rgba(0, 0, 0, 0.1) 7%,
+                                transparent 12%),
+
+                            /* Costura da lombada */
+                            linear-gradient(to left,
+                                transparent 9%,
+                                rgba(0, 0, 0, 0.6) 9.5%,
+                                rgba(255, 255, 255, 0.15) 10%,
+                                transparent 10.5%),
+
+                            /* Escurecimento das bordas (para efeito de desgaste) */
+                            radial-gradient(circle at 50% 50%, transparent 55%, rgba(0, 0, 0, 0.5) 100%),
+
+                            /* Textura física do couro (Ruído fractal via SVG embutido) */
+                            url('data:image/svg+xml;utf8,<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"><filter id="noise"><feTurbulence type="fractalNoise" baseFrequency="1.2" numOctaves="3" stitchTiles="stitch"/></filter><rect width="100%" height="100%" filter="url(%23noise)" opacity="0.5"/></svg>');
+
+                        .selector-lang {
+                            right: 50px;
+                        }
                     }
 
                     .sheet {
@@ -190,21 +232,97 @@ h6 {
                     transform: rotateY(180deg) translateZ(1px);
 
                     .cover-outer {
+                        position: relative;
                         display: flex;
                         align-items: center;
                         justify-content: space-between;
                         flex-direction: column;
-                        padding: 50px 0;
-                        border: 2px solid #3e1f06;
+                        padding: 50px 40px;
+                        border: 2px solid rgba(0, 0, 0, 0.4);
+                        background-color: var(--notebook-cover-color);
+
+                        /* Como as camadas construida acima se misturam com a cor base */
+                        background-blend-mode: normal, normal, multiply, soft-light;
+                        box-shadow:
+                            inset 2px 0 3px rgba(255, 255, 255, 0.1), /* Brilho sutil na ponta da lombada */
+                            inset -4px 0 10px rgba(0, 0, 0, 0.4), /* Sombra interna na borda direita */
+                            inset 0 -4px 10px rgba(0, 0, 0, 0.4), /* Sombra interna inferior */
+                            inset 0 4px 10px rgba(255, 255, 255, 0.05), /* Brilho interno superior */
+                            8px 8px 20px rgba(0, 0, 0, 0.6); /* Sombra do caderno projetada no fundo do site */
 
                         .cover-title {
+                            margin-top: 26px;
                             width: 100%;
+
+                            .title {
+                                color: var(--text-light);
+                                font-size: 2em;
+                                font-weight: bold;
+                                text-align: center;
+                                text-decoration: underline 3px solid var(--text-dark);
+                                text-shadow: 4px 4px 8px #000a;
+                                transition: .2s ease-in-out;
+
+                                &:hover {
+                                    transform: scale(1.06);
+                                }
+                            }
+                        }
+
+                        .cover-banner {
+                            width: 200px;
+                            height: 200px;
+
+                            img {
+                                width: 100%;
+                                height: 100%;
+                                object-fit: cover;
+                            }
+                        }
+
+                        /* --- ESTILO DO BOTÃO DE IDIOMA --- */
+                        .selector-lang {
+                            display: none;
+                            position: absolute;
+                            top: 10px;
+
+                            width: 100px;
+                            padding: 8px;
+                            background-color: rgba(40, 20, 5, 0.5);
+                            border: none;
+                            border-radius: 6px;
+                            cursor: pointer;
+                            transition: all 0.2s ease;
+
+                            display: flex;
+                            justify-content: center;
+                            align-items: center;
+                            gap: 6px;
+
+                            font-family: "Newsreader", sans-serif;
+                            font-size: 1em;
                             color: var(--text-light);
-                            font-size: 2.2em;
-                            font-weight: bold;
-                            text-align: center;
-                            text-decoration: underline 3px solid var(--text-dark);
-                            text-shadow: 4px 4px 8px #000a;
+
+                            box-shadow:
+                                inset 2px 2px 5px rgba(0, 0, 0, 0.7),
+                                inset -1px -1px 3px rgba(255, 255, 255, 0.1),
+                                1px 1px 1px rgba(255, 255, 255, 0.15);
+
+                            &:hover {
+                                background-color: rgba(30, 15, 0, 0.6);
+                                color: #ffffff;
+                            }
+
+                            &:active {
+                                box-shadow:
+                                    inset 3px 3px 6px rgba(0, 0, 0, 0.8),
+                                    inset -1px -1px 2px rgba(255, 255, 255, 0.05);
+                            }
+
+                            .icon {
+                                font-size: 16px;
+                                opacity: 0.8;
+                            }
                         }
                     }
                 }
@@ -248,6 +366,7 @@ h6 {
                         }
 
                         &:not(.template) ul .line {
+
                             &.title:hover>.archive,
                             &.task:has(.task-text:not(:empty):hover)>.archive,
                             &.task:has(.task-text:not(:empty):focus)>.archive,
@@ -341,9 +460,11 @@ h6 {
                                         text-shadow: 0 10px 5px var(--text-completed);
                                     }
 
-                                    &.completed {
-                                        text-decoration: dashed 2px solid #000;
-                                        color: var(--color-completed);
+                                    &.task-completed {
+                                        color: var(--text-completed);
+                                        text-decoration: line-through;
+                                        text-decoration-color: #3b2f2d;
+                                        text-decoration-thickness: 1.5px;
                                     }
                                 }
 
@@ -452,219 +573,74 @@ h6 {
     }
 }
 
-/* ================= Modal de Histórico ================= */
-.modal {
+footer {
     position: fixed;
-    top: 0;
-    left: 0;
+    bottom: 0;
     width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.75);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
-    opacity: 1;
-    transition: opacity 0.3s ease;
-}
-
-.modal.hidden {
-    opacity: 0;
-    pointer-events: none;
-}
-
-.modal-content {
-    background: var(--notebook-sheet-color);
-    padding: 30px;
-    border-radius: 8px;
-    width: 500px;
-    max-width: 90vw;
-    max-height: 80vh;
-    overflow-y: auto;
-    position: relative;
-    color: var(--text-dark);
-    border: 3px solid var(--notebook-cover-color);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-}
-
-.modal-content h1 {
-    margin-bottom: 20px;
-    border-bottom: 2px solid var(--text-dark);
-    padding-bottom: 10px;
-    font-size: 1.8rem;
-}
-
-.close-btn {
-    position: absolute;
-    top: 15px;
-    right: 20px;
-    font-size: 28px;
-    cursor: pointer;
-    color: var(--text-dark);
-    line-height: 1;
-    transition: transform 0.2s;
-}
-
-.close-btn:hover {
-    transform: scale(1.1);
-    color: var(--notebook-v-line-color);
-}
-
-/* Organização interna da lista */
-.archived-page-group {
-    margin-bottom: 25px;
-}
-
-.archived-page-title {
-    font-weight: bold;
-    font-family: "Newsreader", serif;
-    font-size: 1.3rem;
-    margin-bottom: 10px;
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 10px;
-    color: #3e1f06;
-}
-
-.archived-task-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px;
-    border-bottom: 1px dashed rgba(90, 46, 10, 0.3);
-    font-family: "Montserrat", sans-serif;
-    font-size: 0.9rem;
-    background: rgba(0, 0, 0, 0.02);
-}
-
-.archived-task-item:last-child {
-    border-bottom: none;
-}
-
-.task-title-text {
-    flex: 1;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    margin-right: 15px;
-}
-
-/* Badges de Status */
-.badge-container {
-    display: flex;
-    gap: 5px;
-}
-
-.badge {
-    font-size: 0.7rem;
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-family: "Montserrat", sans-serif;
-    font-weight: bold;
-    white-space: nowrap;
-}
-
-.badge.archived {
-    background: #f8d7da;
-    color: #721c24;
-}
-
-.badge.completed {
-    background: #d4edda;
-    color: #155724;
-}
-
-.badge.pending {
-    background: #fff3cd;
-    color: #856404;
-}
-
-.empty-history {
+    padding-bottom: 3px;
     text-align: center;
-    font-family: "Montserrat", sans-serif;
-    color: #888;
-    padding: 30px 0;
-    font-style: italic;
+
+    p {
+        color: var(--text-light);
+        display: inline;
+    }
 }
 
-
-/* .btn {
-    padding: 12px 25px;
-    cursor: pointer;
-    background-color: #8b4513;
-    color: white;
-    border: 2px solid #5a2e0a;
-    border-radius: 5px;
-    font-weight: bold;
-    font-size: 16px;
-    transition: 0.3s;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-
-    &:hover {
-        background-color: #a0522d;
-        transform: translateY(-2px);
+/* =========================================================
+   MD (Medium) - Tablets (ex: iPads em pé)
+   ========================================================= */
+@media (max-width: 768px) {
+    :root {
+        --notebook-width: 100dvw;
+        --notebook-height: 100dvh;
     }
 
-    &:disabled {
-        background-color: #555;
-        border-color: #333;
-        cursor: not-allowed;
-        opacity: 0.5;
-        transform: none;
-        box-shadow: none;
-        display: none;
+    .notebook-container {
+        transform: rotateZ(90deg) translateX(-1%) scale(0.82);
     }
-} */
-
-/* Modal de Histórico */
-/* .modal {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.7);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
-} */
-
-/* .modal.hidden {
-    display: none;
 }
 
-.modal-content {
-    background: var(--notebook-sheet-color);
-    padding: 30px;
-    border-radius: 8px;
-    width: 400px;
-    max-height: 80vh;
-    overflow-y: auto;
-    position: relative;
-    color: #333;
-    border: 2px solid var(--notebook-cover-color);
+/* =========================================================
+   SM (Small) - Celulares Grandes / Telas Deitadas (Landscape)
+   Ex: iPhones Max/Plus, celulares Android maiores ou deitados.
+   ========================================================= */
+@media (max-width: 576px) {
+    :root {
+        --notebook-width: 130dvw;
+        --notebook-height: 100dvh;
+    }
+
+    .notebook-container {
+        transform: rotateZ(90deg) translateX(-1%) scale(0.72);
+    }
 }
 
-.modal-content h2 {
-    margin-bottom: 20px;
-    border-bottom: 2px solid #333;
+/* =========================================================
+   XS (Extra Small) - Celulares Padrão (Portrait / Em pé)
+   Ex: iPhone 12/13/14 normais, Galaxy S22/S23.
+   ========================================================= */
+@media (max-width: 420px) {
+    :root {
+        --notebook-width: 190dvw;
+        --notebook-height: 90dvh;
+    }
+
+    .notebook-container {
+        transform: rotateZ(90deg) translateX(-1%) scale(0.60);
+    }
 }
 
-.close-btn {
-    position: absolute;
-    top: 10px;
-    right: 15px;
-    font-size: 24px;
-    cursor: pointer;
-    color: #333;
-}
+/* =========================================================
+   XXS (Extra Extra Small) - Celulares Antigos ou Muito Pequenos
+   Ex: iPhone SE (1ª geração), Galaxy Fold (tela externa).
+   ========================================================= */
+@media (max-width: 320px) {
+    :root {
+        --notebook-width: 220dvw;
+        --notebook-height: 80dvh;
+    }
 
-#archived-tasks-list li {
-    margin-bottom: 10px;
-    border-bottom: 1px dashed #ccc;
-    padding-bottom: 5px;
-    list-style-type: disc;
-    margin-left: 20px;
-} */
+    .notebook-container {
+        transform: rotateZ(90deg) translateX(-1%) scale(0.50);
+    }
+}
