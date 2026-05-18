@@ -2,514 +2,601 @@
 <html>
 
 <head>
+    <!-- Configurações -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title data-lang="title" data-version>Task Notebook</title>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+    <!-- Informações da Página -->
+    <title data-lang="title" class="title">Task Notebook</title>
+    <meta name="description" data-metadata="description">
+    <meta name="author" data-metadata="author">
+    <meta name="robots" content="index, follow"> <!-- 'noindex' para projeto privado -->
+
+    <!-- Open Graph (WhatsApp, Discord, LinkedIn, etc) -->
+    <meta property="og:title" data-metadata="title">
+    <meta property="og:description" data-metadata="description">
+    <meta property="og:type" content="website">
+
+    <!-- Links de Estilo -->
     <link rel="stylesheet" href="style.css">
     <link rel="shortcut icon" href="public/tasks-icon.ico" type="image/x-icon">
 </head>
 
 <body>
-    <!-- Botão para abrir o histórico (pode posicionar onde preferir) -->
-    <!-- <button onclick="toggleHistory()"
-        style="position: absolute; top: 20px; right: 20px; z-index: 100; padding: 10px 20px; border-radius: 5px; background: var(--notebook-button-color); color: white; border: none; cursor: pointer; font-weight: bold; font-family: 'Montserrat', sans-serif;">
-        Ver Histórico
-    </button> -->
+    <header class="disabled">
+        <h1 data-lang="title">Task Notebook</h1>
+        <h2 data-metadata="author"></h2>
+        <p data-lang="description"></p>
+    </header>
 
-    <!-- Modal de Histórico -->
-    <!-- <div id="history-modal" class="modal hidden">
-        <div class="modal-content">
-            <span class="close-btn" onclick="toggleHistory()">&times;</span>
-            <h1>Tarefas Arquivadas</h1>
-            <div id="archived-tasks-list"> -->
-                <!-- O conteúdo será gerado dinamicamente via JS -->
-            <!-- </div>
+    <main>
+        <div class="notebook-container">
+            <div class="notebook closed-front">
+                <section class="page left closed" id="page-left">
+                    <div class="card front">
+                        <div class="cover-inner"></div>
+                        <div class="sheet left" id="sheet-left">
+                            <div class="page-content">
+                                <span class="page-number"></span>
+                                <span class="v-line"></span>
+                                <ul class="lines">
+                                    <li class="line title">
+                                        <h1 class="page-title"></h1>
+                                        <button type="button" class="archive">
+                                            <img src="public/archive-icon.png"
+                                                alt="Ícone de arquivo com um zíver para arquivar"
+                                                data-lang="img/arquive" class="icon" />
+                                            <span class="text" data-lang="controls/archive"></span>
+                                        </button>
+                                    </li>
+                                    <li class="line"></li>
+                                    <li class="line task">
+                                        <p class="task-text"></p>
+                                        <button type="button" class="archive">
+                                            <img src="public/archive-icon.png"
+                                                alt="Ícone de arquivo com um zíver para arquivar"
+                                                data-lang="img/arquive" class="icon" />
+                                            <span class="text" data-lang="controls/archive"></span>
+                                        </button>
+                                    </li>
+                                    <li class="line task">
+                                        <p class="task-text"></p>
+                                        <button type="button" class="archive">
+                                            <img src="public/archive-icon.png"
+                                                alt="Ícone de arquivo com um zíver para arquivar"
+                                                data-lang="img/arquive" class="icon" />
+                                            <span class="text" data-lang="controls/archive"></span>
+                                        </button>
+                                    </li>
+                                    <li class="line task">
+                                        <p class="task-text"></p>
+                                        <button type="button" class="archive">
+                                            <img src="public/archive-icon.png"
+                                                alt="Ícone de arquivo com um zíver para arquivar"
+                                                data-lang="img/arquive" class="icon" />
+                                            <span class="text" data-lang="controls/archive"></span>
+                                        </button>
+                                    </li>
+                                    <li class="line task">
+                                        <p class="task-text"></p>
+                                        <button type="button" class="archive">
+                                            <img src="public/archive-icon.png"
+                                                alt="Ícone de arquivo com um zíver para arquivar"
+                                                data-lang="img/arquive" class="icon" />
+                                            <span class="text" data-lang="controls/archive"></span>
+                                        </button>
+                                    </li>
+                                    <li class="line task">
+                                        <p class="task-text"></p>
+                                        <button type="button" class="archive">
+                                            <img src="public/archive-icon.png"
+                                                alt="Ícone de arquivo com um zíver para arquivar"
+                                                data-lang="img/arquive" class="icon" />
+                                            <span class="text" data-lang="controls/archive"></span>
+                                        </button>
+                                    </li>
+                                    <li class="line task">
+                                        <p class="task-text"></p>
+                                        <button type="button" class="archive">
+                                            <img src="public/archive-icon.png"
+                                                alt="Ícone de arquivo com um zíver para arquivar"
+                                                data-lang="img/arquive" class="icon" />
+                                            <span class="text" data-lang="controls/archive"></span>
+                                        </button>
+                                    </li>
+                                    <li class="line task">
+                                        <p class="task-text"></p>
+                                        <button type="button" class="archive">
+                                            <img src="public/archive-icon.png"
+                                                alt="Ícone de arquivo com um zíver para arquivar"
+                                                data-lang="img/arquive" class="icon" />
+                                            <span class="text" data-lang="controls/archive"></span>
+                                        </button>
+                                    </li>
+                                    <li class="line task">
+                                        <p class="task-text"></p>
+                                        <button type="button" class="archive">
+                                            <img src="public/archive-icon.png"
+                                                alt="Ícone de arquivo com um zíver para arquivar"
+                                                data-lang="img/arquive" class="icon" />
+                                            <span class="text" data-lang="controls/archive"></span>
+                                        </button>
+                                    </li>
+                                    <li class="line task">
+                                        <p class="task-text"></p>
+                                        <button type="button" class="archive">
+                                            <img src="public/archive-icon.png"
+                                                alt="Ícone de arquivo com um zíver para arquivar"
+                                                data-lang="img/arquive" class="icon" />
+                                            <span class="text" data-lang="controls/archive"></span>
+                                        </button>
+                                    </li>
+                                    <li class="line task">
+                                        <p class="task-text"></p>
+                                        <button type="button" class="archive">
+                                            <img src="public/archive-icon.png"
+                                                alt="Ícone de arquivo com um zíver para arquivar"
+                                                data-lang="img/arquive" class="icon" />
+                                            <span class="text" data-lang="controls/archive"></span>
+                                        </button>
+                                    </li>
+                                    <li class="line task">
+                                        <p class="task-text"></p>
+                                        <button type="button" class="archive">
+                                            <img src="public/archive-icon.png"
+                                                alt="Ícone de arquivo com um zíver para arquivar"
+                                                data-lang="img/arquive" class="icon" />
+                                            <span class="text" data-lang="controls/archive"></span>
+                                        </button>
+                                    </li>
+                                    <li class="line task">
+                                        <p class="task-text"></p>
+                                        <button type="button" class="archive">
+                                            <img src="public/archive-icon.png"
+                                                alt="Ícone de arquivo com um zíver para arquivar"
+                                                data-lang="img/arquive" class="icon" />
+                                            <span class="text" data-lang="controls/archive"></span>
+                                        </button>
+                                    </li>
+                                    <li class="line task">
+                                        <p class="task-text"></p>
+                                        <button type="button" class="archive">
+                                            <img src="public/archive-icon.png"
+                                                alt="Ícone de arquivo com um zíver para arquivar"
+                                                data-lang="img/arquive" class="icon" />
+                                            <span class="text" data-lang="controls/archive"></span>
+                                        </button>
+                                    </li>
+                                    <li class="line task">
+                                        <p class="task-text"></p>
+                                        <button type="button" class="archive">
+                                            <img src="public/archive-icon.png"
+                                                alt="Ícone de arquivo com um zíver para arquivar"
+                                                data-lang="img/arquive" class="icon" />
+                                            <span class="text" data-lang="controls/archive"></span>
+                                        </button>
+                                    </li>
+                                    <li class="line task">
+                                        <p class="task-text"></p>
+                                        <button type="button" class="archive">
+                                            <img src="public/archive-icon.png"
+                                                alt="Ícone de arquivo com um zíver para arquivar"
+                                                data-lang="img/arquive" class="icon" />
+                                            <span class="text" data-lang="controls/archive"></span>
+                                        </button>
+                                    </li>
+                                    <li class="line task">
+                                        <p class="task-text"></p>
+                                        <button type="button" class="archive">
+                                            <img src="public/archive-icon.png"
+                                                alt="Ícone de arquivo com um zíver para arquivar"
+                                                data-lang="img/arquive" class="icon" />
+                                            <span class="text" data-lang="controls/archive"></span>
+                                        </button>
+                                    </li>
+                                    <li class="line task">
+                                        <p class="task-text"></p>
+                                        <button type="button" class="archive">
+                                            <img src="public/archive-icon.png"
+                                                alt="Ícone de arquivo com um zíver para arquivar"
+                                                data-lang="img/arquive" class="icon" />
+                                            <span class="text" data-lang="controls/archive"></span>
+                                        </button>
+                                    </li>
+                                    <li class="line task">
+                                        <p class="task-text"></p>
+                                        <button type="button" class="archive">
+                                            <img src="public/archive-icon.png"
+                                                alt="Ícone de arquivo com um zíver para arquivar"
+                                                data-lang="img/arquive" class="icon" />
+                                            <span class="text" data-lang="controls/archive"></span>
+                                        </button>
+                                    </li>
+                                    <li class="line"></li>
+                                    <li class="line nav">
+                                        <p class="nav"></p>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card back">
+                        <div class="cover-outer">
+                            <button class="selector-lang">
+                                <span class="icon">🌐</span> en-US
+                            </button>
+
+                            <div class="cover-title">
+                                <h1 data-lang="title" class="title">Task Notebook</h1>
+                            </div>
+
+                            <button data-interaction="next" class="button nav" data-lang="controls/open">Open
+                                Notebook</button>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="page right" id="page-right">
+                    <div class="card front">
+                        <div class="cover-inner"></div>
+                        <div class="sheet right" id="sheet-right">
+                            <div class="page-content">
+                                <span class="page-number"></span>
+                                <span class="v-line"></span>
+                                <ul class="lines">
+                                    <li class="line title">
+                                        <h1 class="page-title"></h1>
+                                        <button type="button" class="archive">
+                                            <img src="public/archive-icon.png"
+                                                alt="Ícone de arquivo com um zíver para arquivar"
+                                                data-lang="img/arquive" class="icon" />
+                                            <span class="text" data-lang="controls/archive"></span>
+                                        </button>
+                                    </li>
+                                    <li class="line"></li>
+                                    <li class="line task">
+                                        <p class="task-text"></p>
+                                        <button type="button" class="archive">
+                                            <img src="public/archive-icon.png"
+                                                alt="Ícone de arquivo com um zíver para arquivar"
+                                                data-lang="img/arquive" class="icon" />
+                                            <span class="text" data-lang="controls/archive"></span>
+                                        </button>
+                                    </li>
+                                    <li class="line task">
+                                        <p class="task-text"></p>
+                                        <button type="button" class="archive">
+                                            <img src="public/archive-icon.png"
+                                                alt="Ícone de arquivo com um zíver para arquivar"
+                                                data-lang="img/arquive" class="icon" />
+                                            <span class="text" data-lang="controls/archive"></span>
+                                        </button>
+                                    </li>
+                                    <li class="line task">
+                                        <p class="task-text"></p>
+                                        <button type="button" class="archive">
+                                            <img src="public/archive-icon.png"
+                                                alt="Ícone de arquivo com um zíver para arquivar"
+                                                data-lang="img/arquive" class="icon" />
+                                            <span class="text" data-lang="controls/archive"></span>
+                                        </button>
+                                    </li>
+                                    <li class="line task">
+                                        <p class="task-text"></p>
+                                        <button type="button" class="archive">
+                                            <img src="public/archive-icon.png"
+                                                alt="Ícone de arquivo com um zíver para arquivar"
+                                                data-lang="img/arquive" class="icon" />
+                                            <span class="text" data-lang="controls/archive"></span>
+                                        </button>
+                                    </li>
+                                    <li class="line task">
+                                        <p class="task-text"></p>
+                                        <button type="button" class="archive">
+                                            <img src="public/archive-icon.png"
+                                                alt="Ícone de arquivo com um zíver para arquivar"
+                                                data-lang="img/arquive" class="icon" />
+                                            <span class="text" data-lang="controls/archive"></span>
+                                        </button>
+                                    </li>
+                                    <li class="line task">
+                                        <p class="task-text"></p>
+                                        <button type="button" class="archive">
+                                            <img src="public/archive-icon.png"
+                                                alt="Ícone de arquivo com um zíver para arquivar"
+                                                data-lang="img/arquive" class="icon" />
+                                            <span class="text" data-lang="controls/archive"></span>
+                                        </button>
+                                    </li>
+                                    <li class="line task">
+                                        <p class="task-text"></p>
+                                        <button type="button" class="archive">
+                                            <img src="public/archive-icon.png"
+                                                alt="Ícone de arquivo com um zíver para arquivar"
+                                                data-lang="img/arquive" class="icon" />
+                                            <span class="text" data-lang="controls/archive"></span>
+                                        </button>
+                                    </li>
+                                    <li class="line task">
+                                        <p class="task-text"></p>
+                                        <button type="button" class="archive">
+                                            <img src="public/archive-icon.png"
+                                                alt="Ícone de arquivo com um zíver para arquivar"
+                                                data-lang="img/arquive" class="icon" />
+                                            <span class="text" data-lang="controls/archive"></span>
+                                        </button>
+                                    </li>
+                                    <li class="line task">
+                                        <p class="task-text"></p>
+                                        <button type="button" class="archive">
+                                            <img src="public/archive-icon.png"
+                                                alt="Ícone de arquivo com um zíver para arquivar"
+                                                data-lang="img/arquive" class="icon" />
+                                            <span class="text" data-lang="controls/archive"></span>
+                                        </button>
+                                    </li>
+                                    <li class="line task">
+                                        <p class="task-text"></p>
+                                        <button type="button" class="archive">
+                                            <img src="public/archive-icon.png"
+                                                alt="Ícone de arquivo com um zíver para arquivar"
+                                                data-lang="img/arquive" class="icon" />
+                                            <span class="text" data-lang="controls/archive"></span>
+                                        </button>
+                                    </li>
+                                    <li class="line task">
+                                        <p class="task-text"></p>
+                                        <button type="button" class="archive">
+                                            <img src="public/archive-icon.png"
+                                                alt="Ícone de arquivo com um zíver para arquivar"
+                                                data-lang="img/arquive" class="icon" />
+                                            <span class="text" data-lang="controls/archive"></span>
+                                        </button>
+                                    </li>
+                                    <li class="line task">
+                                        <p class="task-text"></p>
+                                        <button type="button" class="archive">
+                                            <img src="public/archive-icon.png"
+                                                alt="Ícone de arquivo com um zíver para arquivar"
+                                                data-lang="img/arquive" class="icon" />
+                                            <span class="text" data-lang="controls/archive"></span>
+                                        </button>
+                                    </li>
+                                    <li class="line task">
+                                        <p class="task-text"></p>
+                                        <button type="button" class="archive">
+                                            <img src="public/archive-icon.png"
+                                                alt="Ícone de arquivo com um zíver para arquivar"
+                                                data-lang="img/arquive" class="icon" />
+                                            <span class="text" data-lang="controls/archive"></span>
+                                        </button>
+                                    </li>
+                                    <li class="line task">
+                                        <p class="task-text"></p>
+                                        <button type="button" class="archive">
+                                            <img src="public/archive-icon.png"
+                                                alt="Ícone de arquivo com um zíver para arquivar"
+                                                data-lang="img/arquive" class="icon" />
+                                            <span class="text" data-lang="controls/archive"></span>
+                                        </button>
+                                    </li>
+                                    <li class="line task">
+                                        <p class="task-text"></p>
+                                        <button type="button" class="archive">
+                                            <img src="public/archive-icon.png"
+                                                alt="Ícone de arquivo com um zíver para arquivar"
+                                                data-lang="img/arquive" class="icon" />
+                                            <span class="text" data-lang="controls/archive"></span>
+                                        </button>
+                                    </li>
+                                    <li class="line task">
+                                        <p class="task-text"></p>
+                                        <button type="button" class="archive">
+                                            <img src="public/archive-icon.png"
+                                                alt="Ícone de arquivo com um zíver para arquivar"
+                                                data-lang="img/arquive" class="icon" />
+                                            <span class="text" data-lang="controls/archive"></span>
+                                        </button>
+                                    </li>
+                                    <li class="line task">
+                                        <p class="task-text"></p>
+                                        <button type="button" class="archive">
+                                            <img src="public/archive-icon.png"
+                                                alt="Ícone de arquivo com um zíver para arquivar"
+                                                data-lang="img/arquive" class="icon" />
+                                            <span class="text" data-lang="controls/archive"></span>
+                                        </button>
+                                    </li>
+                                    <li class="line task">
+                                        <p class="task-text"></p>
+                                        <button type="button" class="archive">
+                                            <img src="public/archive-icon.png"
+                                                alt="Ícone de arquivo com um zíver para arquivar"
+                                                data-lang="img/arquive" class="icon" />
+                                            <span class="text" data-lang="controls/archive"></span>
+                                        </button>
+                                    </li>
+                                    <li class="line"></li>
+                                    <li class="line nav">
+                                        <p class="nav"></p>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card back">
+                        <div class="cover-outer">
+                            <button class="selector-lang">
+                                <span class="icon">🌐</span> en-US
+                            </button>
+
+                            <div class="cover-title">
+                                <h3 data-lang="title" class="title">Task Notebook</h3>
+                            </div>
+
+                            <button data-interaction="prev" class="button nav" data-lang="controls/open">Open
+                                Notebook</button>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="page animated" id="animated">
+                    <div class="card front">
+                        <div class="sheet anim front" id="anim-front">
+                            <div class="page-content">
+                                <span class="page-number"></span>
+                                <span class="v-line"></span>
+                                <ul class="lines">
+                                    <li class="line title">
+                                        <h1 class="page-title"></h1>
+                                    </li>
+                                    <li class="line"></li>
+                                    <li class="line task">
+                                        <p class="task-text"></p>
+                                    </li>
+                                    <li class="line task">
+                                        <p class="task-text"></p>
+                                    </li>
+                                    <li class="line task">
+                                        <p class="task-text"></p>
+                                    </li>
+                                    <li class="line task">
+                                        <p class="task-text"></p>
+                                    </li>
+                                    <li class="line task">
+                                        <p class="task-text"></p>
+                                    </li>
+                                    <li class="line task">
+                                        <p class="task-text"></p>
+                                    </li>
+                                    <li class="line task">
+                                        <p class="task-text"></p>
+                                    </li>
+                                    <li class="line task">
+                                        <p class="task-text"></p>
+                                    </li>
+                                    <li class="line task">
+                                        <p class="task-text"></p>
+                                    </li>
+                                    <li class="line task">
+                                        <p class="task-text"></p>
+                                    </li>
+                                    <li class="line task">
+                                        <p class="task-text"></p>
+                                    </li>
+                                    <li class="line task">
+                                        <p class="task-text"></p>
+                                    </li>
+                                    <li class="line task">
+                                        <p class="task-text"></p>
+                                    </li>
+                                    <li class="line task">
+                                        <p class="task-text"></p>
+                                    </li>
+                                    <li class="line task">
+                                        <p class="task-text"></p>
+                                    </li>
+                                    <li class="line task">
+                                        <p class="task-text"></p>
+                                    </li>
+                                    <li class="line task">
+                                        <p class="task-text"></p>
+                                    </li>
+                                    <li class="line task">
+                                        <p class="task-text"></p>
+                                    </li>
+                                    <li class="line"></li>
+                                    <li class="line nav">
+                                        <p class="nav"></p>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card back">
+                        <div class="sheet anim back" id="anim-back">
+                            <div class="page-content">
+                                <span class="page-number"></span>
+                                <span class="v-line"></span>
+                                <ul class="lines">
+                                    <li class="line title">
+                                        <h1 class="page-title"></h1>
+                                    </li>
+                                    <li class="line"></li>
+                                    <li class="line task">
+                                        <p class="task-text"></p>
+                                    </li>
+                                    <li class="line task">
+                                        <p class="task-text"></p>
+                                    </li>
+                                    <li class="line task">
+                                        <p class="task-text"></p>
+                                    </li>
+                                    <li class="line task">
+                                        <p class="task-text"></p>
+                                    </li>
+                                    <li class="line task">
+                                        <p class="task-text"></p>
+                                    </li>
+                                    <li class="line task">
+                                        <p class="task-text"></p>
+                                    </li>
+                                    <li class="line task">
+                                        <p class="task-text"></p>
+                                    </li>
+                                    <li class="line task">
+                                        <p class="task-text"></p>
+                                    </li>
+                                    <li class="line task">
+                                        <p class="task-text"></p>
+                                    </li>
+                                    <li class="line task">
+                                        <p class="task-text"></p>
+                                    </li>
+                                    <li class="line task">
+                                        <p class="task-text"></p>
+                                    </li>
+                                    <li class="line task">
+                                        <p class="task-text"></p>
+                                    </li>
+                                    <li class="line task">
+                                        <p class="task-text"></p>
+                                    </li>
+                                    <li class="line task">
+                                        <p class="task-text"></p>
+                                    </li>
+                                    <li class="line task">
+                                        <p class="task-text"></p>
+                                    </li>
+                                    <li class="line task">
+                                        <p class="task-text"></p>
+                                    </li>
+                                    <li class="line task">
+                                        <p class="task-text"></p>
+                                    </li>
+                                    <li class="line task">
+                                        <p class="task-text"></p>
+                                    </li>
+                                    <li class="line"></li>
+                                    <li class="line nav">
+                                        <p class="nav"></p>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
         </div>
-    </div> -->
+    </main>
 
+    <footer>
+        <p class="copyright" data-lang="copyright"></p>
+    </footer>
 
-    <!-- <dialog id="aviso-modal">
-        <p>O nome dessa tarefa já está sendo usado!</p>
-        <button id="fechar-aviso">Entendi</button>
-    </dialog> -->
-
-    <div class="notebook-container">
-        <div class="notebook closed-front">
-            <div class="spine"></div>
-            <section class="page left closed" id="page-left">
-                <div class="card front">
-                    <div class="cover-inner"></div>
-                    <div class="sheet left" id="sheet-left">
-                        <div class="page-content">
-                            <span class="page-number"></span>
-                            <span class="v-line"></span>
-                            <ul class="lines">
-                                <li class="line title">
-                                    <h1 class="page-title"></h1>
-                                    <button type="button" class="archive" onclick="archivePage(this)">
-                                        <img src="public/archive-icon.png" data-lang="img/arquive" class="icon" />
-                                        <span class="text" data-lang="notebook/controls/archive"></span>
-                                    </button>
-                                </li>
-                                <li class="line"></li>
-                                <li class="line task">
-                                    <p class="task-text"></p>
-                                    <button type="button" class="archive" onclick="archiveTask(this)">
-                                        <img src="public/archive-icon.png" data-lang="img/arquive" class="icon" />
-                                        <span class="text" data-lang="notebook/controls/archive"></span>
-                                    </button>
-                                </li>
-                                <li class="line task">
-                                    <p class="task-text"></p>
-                                    <button type="button" class="archive" onclick="archiveTask(this)">
-                                        <img src="public/archive-icon.png" data-lang="img/arquive" class="icon" />
-                                        <span class="text" data-lang="notebook/controls/archive"></span>
-                                    </button>
-                                </li>
-                                <li class="line task">
-                                    <p class="task-text"></p>
-                                    <button type="button" class="archive" onclick="archiveTask(this)">
-                                        <img src="public/archive-icon.png" data-lang="img/arquive" class="icon" />
-                                        <span class="text" data-lang="notebook/controls/archive"></span>
-                                    </button>
-                                </li>
-                                <li class="line task">
-                                    <p class="task-text"></p>
-                                    <button type="button" class="archive" onclick="archiveTask(this)">
-                                        <img src="public/archive-icon.png" data-lang="img/arquive" class="icon" />
-                                        <span class="text" data-lang="notebook/controls/archive"></span>
-                                    </button>
-                                </li>
-                                <li class="line task">
-                                    <p class="task-text"></p>
-                                    <button type="button" class="archive" onclick="archiveTask(this)">
-                                        <img src="public/archive-icon.png" data-lang="img/arquive" class="icon" />
-                                        <span class="text" data-lang="notebook/controls/archive"></span>
-                                    </button>
-                                </li>
-                                <li class="line task">
-                                    <p class="task-text"></p>
-                                    <button type="button" class="archive" onclick="archiveTask(this)">
-                                        <img src="public/archive-icon.png" data-lang="img/arquive" class="icon" />
-                                        <span class="text" data-lang="notebook/controls/archive"></span>
-                                    </button>
-                                </li>
-                                <li class="line task">
-                                    <p class="task-text"></p>
-                                    <button type="button" class="archive" onclick="archiveTask(this)">
-                                        <img src="public/archive-icon.png" data-lang="img/arquive" class="icon" />
-                                        <span class="text" data-lang="notebook/controls/archive"></span>
-                                    </button>
-                                </li>
-                                <li class="line task">
-                                    <p class="task-text"></p>
-                                    <button type="button" class="archive" onclick="archiveTask(this)">
-                                        <img src="public/archive-icon.png" data-lang="img/arquive" class="icon" />
-                                        <span class="text" data-lang="notebook/controls/archive"></span>
-                                    </button>
-                                </li>
-                                <li class="line task">
-                                    <p class="task-text"></p>
-                                    <button type="button" class="archive" onclick="archiveTask(this)">
-                                        <img src="public/archive-icon.png" data-lang="img/arquive" class="icon" />
-                                        <span class="text" data-lang="notebook/controls/archive"></span>
-                                    </button>
-                                </li>
-                                <li class="line task">
-                                    <p class="task-text"></p>
-                                    <button type="button" class="archive" onclick="archiveTask(this)">
-                                        <img src="public/archive-icon.png" data-lang="img/arquive" class="icon" />
-                                        <span class="text" data-lang="notebook/controls/archive"></span>
-                                    </button>
-                                </li>
-                                <li class="line task">
-                                    <p class="task-text"></p>
-                                    <button type="button" class="archive" onclick="archiveTask(this)">
-                                        <img src="public/archive-icon.png" data-lang="img/arquive" class="icon" />
-                                        <span class="text" data-lang="notebook/controls/archive"></span>
-                                    </button>
-                                </li>
-                                <li class="line task">
-                                    <p class="task-text"></p>
-                                    <button type="button" class="archive" onclick="archiveTask(this)">
-                                        <img src="public/archive-icon.png" data-lang="img/arquive" class="icon" />
-                                        <span class="text" data-lang="notebook/controls/archive"></span>
-                                    </button>
-                                </li>
-                                <li class="line task">
-                                    <p class="task-text"></p>
-                                    <button type="button" class="archive" onclick="archiveTask(this)">
-                                        <img src="public/archive-icon.png" data-lang="img/arquive" class="icon" />
-                                        <span class="text" data-lang="notebook/controls/archive"></span>
-                                    </button>
-                                </li>
-                                <li class="line task">
-                                    <p class="task-text"></p>
-                                    <button type="button" class="archive" onclick="archiveTask(this)">
-                                        <img src="public/archive-icon.png" data-lang="img/arquive" class="icon" />
-                                        <span class="text" data-lang="notebook/controls/archive"></span>
-                                    </button>
-                                </li>
-                                <li class="line task">
-                                    <p class="task-text"></p>
-                                    <button type="button" class="archive" onclick="archiveTask(this)">
-                                        <img src="public/archive-icon.png" data-lang="img/arquive" class="icon" />
-                                        <span class="text" data-lang="notebook/controls/archive"></span>
-                                    </button>
-                                </li>
-                                <li class="line task">
-                                    <p class="task-text"></p>
-                                    <button type="button" class="archive" onclick="archiveTask(this)">
-                                        <img src="public/archive-icon.png" data-lang="img/arquive" class="icon" />
-                                        <span class="text" data-lang="notebook/controls/archive"></span>
-                                    </button>
-                                </li>
-                                <li class="line task">
-                                    <p class="task-text"></p>
-                                    <button type="button" class="archive" onclick="archiveTask(this)">
-                                        <img src="public/archive-icon.png" data-lang="img/arquive" class="icon" />
-                                        <span class="text" data-lang="notebook/controls/archive"></span>
-                                    </button>
-                                </li>
-                                <li class="line task">
-                                    <p class="task-text"></p>
-                                    <button type="button" class="archive" onclick="archiveTask(this)">
-                                        <img src="public/archive-icon.png" data-lang="img/arquive" class="icon" />
-                                        <span class="text" data-lang="notebook/controls/archive"></span>
-                                    </button>
-                                </li>
-                                <li class="line"></li>
-                                <li class="line">
-                                    <p class="nav" onclick="handleBookInteraction(this)"></p>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-                <div class="card back">
-                    <div class="cover-outer">
-                        <div class="cover-title">
-                            <h1 data-lang="notebook/title">Task Notebook</h1>
-                        </div>
-                        <button onclick="handleBookInteraction(this)" data-interaction="next" class="button"
-                            data-lang="notebook/controls/open">Open Notebook</button>
-                    </div>
-                </div>
-            </section>
-
-            <section class="page right" id="page-right">
-                <div class="card front">
-                    <div class="cover-inner"></div>
-                    <div class="sheet right" id="sheet-right">
-                        <div class="page-content">
-                            <span class="page-number"></span>
-                            <span class="v-line"></span>
-                            <ul class="lines">
-                                <li class="line title">
-                                    <h1 class="page-title"></h1>
-                                    <button type="button" class="archive" onclick="archivePage(this)">
-                                        <img src="public/archive-icon.png" data-lang="img/arquive" class="icon" />
-                                        <span class="text" data-lang="notebook/controls/archive"></span>
-                                    </button>
-                                </li>
-                                <li class="line"></li>
-                                <li class="line task">
-                                    <p class="task-text"></p>
-                                    <button type="button" class="archive" onclick="archiveTask(this)">
-                                        <img src="public/archive-icon.png" data-lang="img/arquive" class="icon" />
-                                        <span class="text" data-lang="notebook/controls/archive"></span>
-                                    </button>
-                                </li>
-                                <li class="line task">
-                                    <p class="task-text"></p>
-                                    <button type="button" class="archive" onclick="archiveTask(this)">
-                                        <img src="public/archive-icon.png" data-lang="img/arquive" class="icon" />
-                                        <span class="text" data-lang="notebook/controls/archive"></span>
-                                    </button>
-                                </li>
-                                <li class="line task">
-                                    <p class="task-text"></p>
-                                    <button type="button" class="archive" onclick="archiveTask(this)">
-                                        <img src="public/archive-icon.png" data-lang="img/arquive" class="icon" />
-                                        <span class="text" data-lang="notebook/controls/archive"></span>
-                                    </button>
-                                </li>
-                                <li class="line task">
-                                    <p class="task-text"></p>
-                                    <button type="button" class="archive" onclick="archiveTask(this)">
-                                        <img src="public/archive-icon.png" data-lang="img/arquive" class="icon" />
-                                        <span class="text" data-lang="notebook/controls/archive"></span>
-                                    </button>
-                                </li>
-                                <li class="line task">
-                                    <p class="task-text"></p>
-                                    <button type="button" class="archive" onclick="archiveTask(this)">
-                                        <img src="public/archive-icon.png" data-lang="img/arquive" class="icon" />
-                                        <span class="text" data-lang="notebook/controls/archive"></span>
-                                    </button>
-                                </li>
-                                <li class="line task">
-                                    <p class="task-text"></p>
-                                    <button type="button" class="archive" onclick="archiveTask(this)">
-                                        <img src="public/archive-icon.png" data-lang="img/arquive" class="icon" />
-                                        <span class="text" data-lang="notebook/controls/archive"></span>
-                                    </button>
-                                </li>
-                                <li class="line task">
-                                    <p class="task-text"></p>
-                                    <button type="button" class="archive" onclick="archiveTask(this)">
-                                        <img src="public/archive-icon.png" data-lang="img/arquive" class="icon" />
-                                        <span class="text" data-lang="notebook/controls/archive"></span>
-                                    </button>
-                                </li>
-                                <li class="line task">
-                                    <p class="task-text"></p>
-                                    <button type="button" class="archive" onclick="archiveTask(this)">
-                                        <img src="public/archive-icon.png" data-lang="img/arquive" class="icon" />
-                                        <span class="text" data-lang="notebook/controls/archive"></span>
-                                    </button>
-                                </li>
-                                <li class="line task">
-                                    <p class="task-text"></p>
-                                    <button type="button" class="archive" onclick="archiveTask(this)">
-                                        <img src="public/archive-icon.png" data-lang="img/arquive" class="icon" />
-                                        <span class="text" data-lang="notebook/controls/archive"></span>
-                                    </button>
-                                </li>
-                                <li class="line task">
-                                    <p class="task-text"></p>
-                                    <button type="button" class="archive" onclick="archiveTask(this)">
-                                        <img src="public/archive-icon.png" data-lang="img/arquive" class="icon" />
-                                        <span class="text" data-lang="notebook/controls/archive"></span>
-                                    </button>
-                                </li>
-                                <li class="line task">
-                                    <p class="task-text"></p>
-                                    <button type="button" class="archive" onclick="archiveTask(this)">
-                                        <img src="public/archive-icon.png" data-lang="img/arquive" class="icon" />
-                                        <span class="text" data-lang="notebook/controls/archive"></span>
-                                    </button>
-                                </li>
-                                <li class="line task">
-                                    <p class="task-text"></p>
-                                    <button type="button" class="archive" onclick="archiveTask(this)">
-                                        <img src="public/archive-icon.png" data-lang="img/arquive" class="icon" />
-                                        <span class="text" data-lang="notebook/controls/archive"></span>
-                                    </button>
-                                </li>
-                                <li class="line task">
-                                    <p class="task-text"></p>
-                                    <button type="button" class="archive" onclick="archiveTask(this)">
-                                        <img src="public/archive-icon.png" data-lang="img/arquive" class="icon" />
-                                        <span class="text" data-lang="notebook/controls/archive"></span>
-                                    </button>
-                                </li>
-                                <li class="line task">
-                                    <p class="task-text"></p>
-                                    <button type="button" class="archive" onclick="archiveTask(this)">
-                                        <img src="public/archive-icon.png" data-lang="img/arquive" class="icon" />
-                                        <span class="text" data-lang="notebook/controls/archive"></span>
-                                    </button>
-                                </li>
-                                <li class="line task">
-                                    <p class="task-text"></p>
-                                    <button type="button" class="archive" onclick="archiveTask(this)">
-                                        <img src="public/archive-icon.png" data-lang="img/arquive" class="icon" />
-                                        <span class="text" data-lang="notebook/controls/archive"></span>
-                                    </button>
-                                </li>
-                                <li class="line task">
-                                    <p class="task-text"></p>
-                                    <button type="button" class="archive" onclick="archiveTask(this)">
-                                        <img src="public/archive-icon.png" data-lang="img/arquive" class="icon" />
-                                        <span class="text" data-lang="notebook/controls/archive"></span>
-                                    </button>
-                                </li>
-                                <li class="line task">
-                                    <p class="task-text"></p>
-                                    <button type="button" class="archive" onclick="archiveTask(this)">
-                                        <img src="public/archive-icon.png" data-lang="img/arquive" class="icon" />
-                                        <span class="text" data-lang="notebook/controls/archive"></span>
-                                    </button>
-                                </li>
-                                <li class="line task">
-                                    <p class="task-text"></p>
-                                    <button type="button" class="archive" onclick="archiveTask(this)">
-                                        <img src="public/archive-icon.png" data-lang="img/arquive" class="icon" />
-                                        <span class="text" data-lang="notebook/controls/archive"></span>
-                                    </button>
-                                </li>
-                                <li class="line"></li>
-                                <li class="line">
-                                    <p class="nav" onclick="handleBookInteraction(this)"></p>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-                <div class="card back">
-                    <div class="cover-outer">
-                        <div class="cover-title">
-                            <h3 data-lang="notebook/title">Task Notebook</h3>
-                        </div>
-                        <button onclick="handleBookInteraction(this)" data-interaction="prev" class="button"
-                            data-lang="notebook/controls/open">Open Notebook</button>
-                    </div>
-                </div>
-            </section>
-
-            <section class="page animated" id="animated">
-                <div class="card front">
-                    <div class="sheet anim front" id="anim-front">
-                        <div class="page-content">
-                            <span class="page-number"></span>
-                            <span class="v-line"></span>
-                            <ul class="lines">
-                                <li class="line title">
-                                    <h1 class="page-title"></h1>
-                                </li>
-                                <li class="line"></li>
-                                <li class="line task">
-                                    <p class="task-text"></p>
-                                </li>
-                                <li class="line task">
-                                    <p class="task-text"></p>
-                                </li>
-                                <li class="line task">
-                                    <p class="task-text"></p>
-                                </li>
-                                <li class="line task">
-                                    <p class="task-text"></p>
-                                </li>
-                                <li class="line task">
-                                    <p class="task-text"></p>
-                                </li>
-                                <li class="line task">
-                                    <p class="task-text"></p>
-                                </li>
-                                <li class="line task">
-                                    <p class="task-text"></p>
-                                </li>
-                                <li class="line task">
-                                    <p class="task-text"></p>
-                                </li>
-                                <li class="line task">
-                                    <p class="task-text"></p>
-                                </li>
-                                <li class="line task">
-                                    <p class="task-text"></p>
-                                </li>
-                                <li class="line task">
-                                    <p class="task-text"></p>
-                                </li>
-                                <li class="line task">
-                                    <p class="task-text"></p>
-                                </li>
-                                <li class="line task">
-                                    <p class="task-text"></p>
-                                </li>
-                                <li class="line task">
-                                    <p class="task-text"></p>
-                                </li>
-                                <li class="line task">
-                                    <p class="task-text"></p>
-                                </li>
-                                <li class="line task">
-                                    <p class="task-text"></p>
-                                </li>
-                                <li class="line task">
-                                    <p class="task-text"></p>
-                                </li>
-                                <li class="line task">
-                                    <p class="task-text"></p>
-                                </li>
-                                <li class="line"></li>
-                                <li class="line">
-                                    <p class="nav"></p>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-                <div class="card back">
-                    <div class="sheet anim back" id="anim-back">
-                        <div class="page-content">
-                            <span class="page-number"></span>
-                            <span class="v-line"></span>
-                            <ul class="lines">
-                                <li class="line title">
-                                    <h1 class="page-title"></h1>
-                                </li>
-                                <li class="line"></li>
-                                <li class="line task">
-                                    <p class="task-text"></p>
-                                </li>
-                                <li class="line task">
-                                    <p class="task-text"></p>
-                                </li>
-                                <li class="line task">
-                                    <p class="task-text"></p>
-                                </li>
-                                <li class="line task">
-                                    <p class="task-text"></p>
-                                </li>
-                                <li class="line task">
-                                    <p class="task-text"></p>
-                                </li>
-                                <li class="line task">
-                                    <p class="task-text"></p>
-                                </li>
-                                <li class="line task">
-                                    <p class="task-text"></p>
-                                </li>
-                                <li class="line task">
-                                    <p class="task-text"></p>
-                                </li>
-                                <li class="line task">
-                                    <p class="task-text"></p>
-                                </li>
-                                <li class="line task">
-                                    <p class="task-text"></p>
-                                </li>
-                                <li class="line task">
-                                    <p class="task-text"></p>
-                                </li>
-                                <li class="line task">
-                                    <p class="task-text"></p>
-                                </li>
-                                <li class="line task">
-                                    <p class="task-text"></p>
-                                </li>
-                                <li class="line task">
-                                    <p class="task-text"></p>
-                                </li>
-                                <li class="line task">
-                                    <p class="task-text"></p>
-                                </li>
-                                <li class="line task">
-                                    <p class="task-text"></p>
-                                </li>
-                                <li class="line task">
-                                    <p class="task-text"></p>
-                                </li>
-                                <li class="line task">
-                                    <p class="task-text"></p>
-                                </li>
-                                <li class="line"></li>
-                                <li class="line">
-                                    <p class="nav"></p>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            </section>
-        </div>
-    </div>
-
-    <script src="languages.js"></script>
-    <script src="TaskNotebook.js"></script>
-    <script src="main.js"></script>
+    <script type="module" src="./js/language/language.js"></script>
+    <script type="module" src="./js/main.js"></script>
 </body>
 
 </html>
