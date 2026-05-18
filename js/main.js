@@ -1,18 +1,18 @@
-import { TaskNotebook } from './TaskNotebook.js';
-import { LanguageController } from './LanguageController.js';
-import { DICTIONARY } from './dictionary.js';
+import { NotebookController } from './controller/NotebookController.js';
+import { getTextLanguage, reloadLanguage } from './language/language.js';
+import { METADATA } from './metadata.js';
 
-const metadata = { language: 'en', version: '1.6', debug: true, author: "Kaik D' Andrade", authorUrl: 'https://github.com/kaikdandrade' };
-const taskNote = new TaskNotebook();
-const languageController = new LanguageController(DICTIONARY);
+/** @type {NotebookController} */
+const taskNote = new NotebookController();
 
 /**
- * @param {boolean} debug 
+ * Função inicial, roda assim que o site carrega é responsável por:
+ *  * Definir os elementos do caderno que serão usados
+ *  * Seta quantidade de tarefas máxima
+ *  * Seta as funções de clique do mouse
+ *  * Verifica possiveis erros
  */
-function initialize(debug) {
-    // Configura a linguagem do caderno de tarefas usando o controlador de linguagem
-    languageController.setLanguage(metadata.language);
-
+function initialize() {
     // VERIFICAÇÃO CRÍTICA: O container principal do caderno existe no HTML?
     const notebookContainer = document.querySelector('.notebook');
     if (!notebookContainer)
@@ -66,72 +66,53 @@ function initialize(debug) {
             archiveTask(this);
         });
     });
-
-    notebookContainer.querySelector('.selector-lang').addEventListener('click', function () {
-        const availableLanguages = LanguageController.getAllLanguages();
-
-        // Descobre o índice do idioma atual no array
-        const currentIndex = availableLanguages.indexOf(metadata.language);
-
-        // Calcula o próximo índice. O operador '%' garante que se for o último idioma, ele volte pro primeiro (índice 0)
-        const nextIndex = (currentIndex + 1) % availableLanguages.length;
-
-        // Atualiza os metadados e avisa o controlador para mudar o texto das tarefas/títulos
-        metadata.language = availableLanguages[nextIndex];
-        languageController.setLanguage(metadata.language);
-        this.innerHTML = `<span class="icon">🌐</span> ${metadata.language}`;
-    });
-
-    // Se não estiver em debug o caderno começa fechado, senão começa aberto
-    if (debug) {
-        // Adiciona dados de exemplo
-        for (let i = 1; i < 2; i++) {
-            let page_id = taskNote.newPage(`Lorem ipsum dolor 0${i}!`);
-            // console.log(page_id)
-            if (page_id)
-                for (let j = 1; j < Math.floor(Math.random() * (18 - 4 + 1)) + 4; j++)
-                    taskNote.newTask(page_id, `Ipsum dolor ${i}.${j}`);
-        }
-        changeState('open_front');
-    } else
-        changeState('close_front');
 }
 
 /**
- * @param {object} data 
+ * ......
  */
-function update(data = {}) {
-    languageController.loadLanguage();
+function update() {
+    reloadLanguage(); // ...
 
-    const metadataElement = document.querySelectorAll('[data-metadata]');
-    metadataElement.forEach(el => {
-        const value = el.dataset.metadata;
-        switch (value) {
+    // ...
+    const metadataElements = document.querySelectorAll('[data-metadata]');
+    metadataElements.forEach(el => {
+        const key = el.dataset.metadata;
+        let content = '';
+        let shouldAppend = false;
+
+        // ...
+        switch (key) {
             case 'title':
-                if (el instanceof HTMLMetaElement)
-                    el.setAttribute('content', languageController.getTextLanguage('title'));
+            case 'description':
+                content = getTextLanguage(key);
                 break;
             case 'version':
-                el.innerHTML += ' v' + metadata.version;
+                content = ` v${METADATA.version}`;
+                shouldAppend = true;
                 break;
             case 'author':
-                if (el instanceof HTMLMetaElement) el.setAttribute('content', metadata.author);
-                else el.innerHTML = metadata.author;
-                break;
-            case 'description':
-                if (el instanceof HTMLMetaElement) el.setAttribute('content', languageController.getTextLanguage('description'));
-                else el.innerHTML = languageController.getTextLanguage('description');
+                content = METADATA.author;
                 break;
             default:
-                break;
+                return; // Chave desconhecida...
         }
+
+        // ...
+        if (el instanceof HTMLMetaElement) 
+            el.setAttribute('content', content);
+        else 
+            if (shouldAppend) 
+                el.textContent += content;
+            else 
+                el.textContent = content;
     });
 }
 
 /**
  * Função para controlar a mudança de estado do caderno, manipulando as classes HTML e populando as páginas conforme necessário.
- * @param {TaskNotebook} note
- * @param {string} action: ['open_front', 'open_back', 'close_front', 'close_back']
+ * @param {string} action - Um de: 'open_front', 'open_back', 'close_front', 'close_back'
+ * @returns {void}
  */
 function changeState(action) {
     // Carrega a configuração da ação de mudança de estado, se ação for invalid emite um erro fatal.
@@ -149,7 +130,8 @@ function changeState(action) {
 /**
  * Popula a página com as informações, controlando e manipulando tudo no HTML minuciosamente.
  * @param {HTMLDivElement} sheet - O elemento HTML da página a ser populada, que pode ser a folha esquerda ou direita do caderno.
- * @param {int} index - O índice da página a ser populada.
+ * @param {number} index - O índice da página a ser populada.
+ * @returns {void}
  */
 function populatePage(sheet, index) {
     // Se a página for template, isso significa que o usuário navegou para uma página nova que ainda não existe, 
@@ -337,7 +319,7 @@ function populatePage(sheet, index) {
             if (archiveButton) archiveButton.classList.add('disabled');
 
             // Configura o placeholfer visual
-            const templateName = languageController.getTextLanguage('controls/newTask'); // Texto template para o nome da tarefa
+            const templateName = getTextLanguage('controls/newTask'); // Texto template para o nome da tarefa
             templateTaskName.innerHTML = templateName; // Texto template para o nome da tarefa
             templateTaskName.classList.add('task-template');
 
@@ -417,7 +399,7 @@ function templatePage(sheet, index) {
 
     // Adiciona o template de título da página no elemento HTML, configura as funções e desativa as "ajudas" do navegador no elemento HTML
     const pageTitle = container.querySelector('.line.title .page-title');
-    const templateTitle = languageController.getTextLanguage('controls/newPage'); // Texto template para o título da página
+    const templateTitle = getTextLanguage('controls/newPage'); // Texto template para o título da página
     pageTitle.innerHTML = templateTitle; // Texto template para o título da página
     pageTitle.spellcheck = false; // Remove as linhas vermelhas (PC e Mobile)
     pageTitle.setAttribute('autocorrect', 'off'); // Específico para Safari/iOS
@@ -426,31 +408,23 @@ function templatePage(sheet, index) {
     pageTitle.addEventListener('dblclick', (e) => {
         e.preventDefault();
         pageTitle.contentEditable = "true";
+        pageTitle.innerHTML = '';
         pageTitle.focus();
-
-        // Abaixo usando range & selection, sempre que clicar para editar o ponteiro vai pro final da frase
-        const range = document.createRange();
-        const selecao = window.getSelection();
-        range.selectNodeContents(pageTitle);
-        range.collapse(false);
-        selecao.removeAllRanges();
-        selecao.addRange(range);
     });
 
     // O blur agora age de forma inteligente, seja disparado pelo mouse (clique fora) ou pelo Enter/Esc no keydown
     pageTitle.addEventListener('blur', (e) => {
         e.preventDefault();
         pageTitle.contentEditable = "false";
-
         const titleText = pageTitle.innerHTML.trim();
 
-        // Se o texto for diferente e não for vazio, salva.
-        // Se clicarem fora com o texto vazio, cai no 'else' e restaura o nome original.
-        if (titleText !== page.title && titleText.length > 0) {
-            page.title = titleText;
-            taskNote.updatePageTitle(page.uuid, page.title);
+        // ...
+        if (titleText !== '' && titleText.length > 0) {
+            pageTitle.title = titleText;
+            taskNote.newPage(titleText);
+            populatePage(sheet, index)
         } else
-            pageTitle.innerHTML = page.title;
+            pageTitle.innerHTML = templateTitle;
     });
 
     pageTitle.addEventListener('keydown', (e) => {
@@ -466,8 +440,8 @@ function templatePage(sheet, index) {
 
         } else if (e.key === 'Escape') {
             e.preventDefault();
-            pageTitle.innerHTML = page.title; // Restaura o original imediatamente
-            pageTitle.blur(); // Sai da edição (vai passar pelo blur, mas não salvará nada por cima)
+            pageTitle.innerHTML = templateTitle; // Restaura o original imediatamente
+            pageTitle.contentEditable = false;
 
         } else if (len >= 30) {
             // Lista de teclas que devem SEMPRE funcionar
@@ -692,6 +666,4 @@ function archivePage(el) {
         throw new Error(`ArchivePage Error: Page data not found for the current page index.`);
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-    initialize(metadata.debug);
-});
+document.addEventListener('DOMContentLoaded', initialize, { once: true });
