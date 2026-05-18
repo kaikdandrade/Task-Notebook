@@ -1,63 +1,80 @@
 const languages = {
     language: '',
     pt: {
-        lang: 'pt',
+        lang: 'pt-BR',
         title: 'Caderno de Tarefas',
         notebook: {
-            title: {
-                start: 'Caderno de Tarefas',
-                end: 'Caderno de Tarefas'
-            },
+            title: 'Caderno de Tarefas',
             controls: {
-                btn: {
-                    finally: 'Fechar Caderno',
-                    toggle: 'Abrir Caderno',
-                    next: 'Ir para próxima página >>',
-                    prev: '<< Voltar para página anterior'
-                }
+                archive: 'Arquivar',
+                closed: 'Fechar Caderno',
+                open: 'Abrir Caderno',
+                next: 'Ir para próxima página >>',
+                prev: '<< Voltar para página anterior'
             }
         },
     },
     es: {
-        lang: 'es',
+        lang: 'es-ES',
         title: 'Cuaderno de Tareas',
         notebook: {
-            title: {
-                start: 'Cuaderno de Tareas',
-                end: 'Cuaderno de Tareas'
-            },
+            title: 'Cuaderno de Tareas',
             controls: {
-                btn: {
-                    finally: 'Cerrar Cuaderno',
-                    toggle: 'Abrir Cuaderno',
-                    next: 'Ir a la siguiente página >>',
-                    prev: '<< Volver a la página anterior'
-                }
+                archive: 'Cerrar',
+                closed: 'Cerrar Cuaderno',
+                open: 'Abrir Cuaderno',
+                next: 'Ir a la siguiente página >>',
+                prev: '<< Volver a la página anterior'
             }
         },
     },
     en: {
-        lang: 'en',
+        lang: 'en-US',
         title: 'Task Notebook',
         notebook: {
-            title: {
-                start: 'Task Notebook',
-                end: 'Task Notebook'
-            },
+            title: 'Task Notebook',
             controls: {
-                btn: {
-                    finally: 'Close Notebook',
-                    toggle: 'Open Notebook',
-                    next: 'Go to next page >>',
-                    prev: '<< Go to previous page'
-                }
+                archive: 'Archive',
+                closed: 'Close Notebook',
+                open: 'Open Notebook',
+                next: 'Next page',
+                prev: 'Previous page'
             }
         },
     },
+    it: {
+        lang: 'it-IT',
+        title: 'Taccuino delle attività',
+        notebook: {
+            title: 'Taccuino delle attività',
+            controls: {
+                archive: 'Archivia',
+                closed: 'Chiudi taccuino',
+                open: 'Apri taccuino',
+                next: 'Pagina successiva >>',
+                prev: '<< Pagina precedente'
+            }
+        }
+    },
+    fr: {
+        lang: 'fr-FR',
+        title: 'Carnet de tâches',
+        notebook: {
+            title: 'Carnet de tâches',
+            controls: {
+                archive: 'Archiver',
+                closed: 'Fermer le carnet',
+                open: 'Ouvrir le carnet',
+                next: 'Page suivante >>',
+                prev: '<< Page précédente'
+            }
+        }
+    }
 };
 
 // Função para alterar a linguagem e atualizar o conteúdo da página
 function setLanguage(language) {
+    if (!language) return;
     const html = document.documentElement;
     html.setAttribute('lang', languages[language].lang || 'en');
     languages.language = language;
@@ -92,7 +109,7 @@ function getTextLanguage(pathLang) {
     let path = pathLang.split('/');
     let text = '';
 
-    if (path.length > 1) 
+    if (path.length > 1)
         for (let i = 0; i < path.length; i++)
             dataLang = dataLang?.[path[i]];
     else text = dataLang?.[path[0]];

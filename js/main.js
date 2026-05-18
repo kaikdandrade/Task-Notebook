@@ -1,13 +1,20 @@
-const metadata = { language: 'en', version: '1.4', debug: true };
+import { TaskNotebook } from './TaskNotebook.js';
+import { LanguageController } from './LanguageController.js';
+import { DICTIONARY } from './dictionary.js';
+
+const metadata = { language: 'en', version: '1.6', debug: true, author: "Kaik D' Andrade", authorUrl: 'https://github.com/kaikdandrade' };
 const taskNote = new TaskNotebook();
+const languageController = new LanguageController(DICTIONARY);
 
 /**
  * @param {boolean} debug 
  */
 function initialize(debug) {
-    const notebookContainer = document.querySelector('.notebook');
+    // Configura a linguagem do caderno de tarefas usando o controlador de linguagem
+    languageController.setLanguage(metadata.language);
 
-    // VERIFICAÇÃO CRÍTICA: O container existe?
+    // VERIFICAÇÃO CRÍTICA: O container principal do caderno existe no HTML?
+    const notebookContainer = document.querySelector('.notebook');
     if (!notebookContainer)
         throw new Error(`Initialize Error: The 'notebook container' not found in HTML.`);
 
@@ -41,6 +48,40 @@ function initialize(debug) {
     if (domErrors)
         throw new Error('Initialize Error: Initialization aborted, incomplete HTML structure.');
 
+    // Chama Handleinteraction ao clicar em qualquer um dos botões de navegação.
+    notebookContainer.querySelectorAll('.nav').forEach(btn => {
+        btn.addEventListener('click', function () {
+            handleBookInteraction(this);
+        });
+    });
+
+    notebookContainer.querySelectorAll('.line.title .archive').forEach(btn => {
+        btn.addEventListener('click', function () {
+            archivePage(this);
+        });
+    });
+
+    notebookContainer.querySelectorAll('.line.task .archive').forEach(btn => {
+        btn.addEventListener('click', function () {
+            archiveTask(this);
+        });
+    });
+
+    notebookContainer.querySelector('.selector-lang').addEventListener('click', function () {
+        const availableLanguages = LanguageController.getAllLanguages();
+
+        // Descobre o índice do idioma atual no array
+        const currentIndex = availableLanguages.indexOf(metadata.language);
+
+        // Calcula o próximo índice. O operador '%' garante que se for o último idioma, ele volte pro primeiro (índice 0)
+        const nextIndex = (currentIndex + 1) % availableLanguages.length;
+
+        // Atualiza os metadados e avisa o controlador para mudar o texto das tarefas/títulos
+        metadata.language = availableLanguages[nextIndex];
+        languageController.setLanguage(metadata.language);
+        this.innerHTML = `<span class="icon">🌐</span> ${metadata.language}`;
+    });
+
     // Se não estiver em debug o caderno começa fechado, senão começa aberto
     if (debug) {
         // Adiciona dados de exemplo
@@ -60,7 +101,31 @@ function initialize(debug) {
  * @param {object} data 
  */
 function update(data = {}) {
-    if (typeof setLanguage === 'function') setLanguage(metadata.language);
+    languageController.loadLanguage();
+
+    const metadataElement = document.querySelectorAll('[data-metadata]');
+    metadataElement.forEach(el => {
+        const value = el.dataset.metadata;
+        switch (value) {
+            case 'title':
+                if (el instanceof HTMLMetaElement)
+                    el.setAttribute('content', languageController.getTextLanguage('title'));
+                break;
+            case 'version':
+                el.innerHTML += ' v' + metadata.version;
+                break;
+            case 'author':
+                if (el instanceof HTMLMetaElement) el.setAttribute('content', metadata.author);
+                else el.innerHTML = metadata.author;
+                break;
+            case 'description':
+                if (el instanceof HTMLMetaElement) el.setAttribute('content', languageController.getTextLanguage('description'));
+                else el.innerHTML = languageController.getTextLanguage('description');
+                break;
+            default:
+                break;
+        }
+    });
 }
 
 /**
@@ -87,8 +152,8 @@ function changeState(action) {
  * @param {int} index - O índice da página a ser populada.
  */
 function populatePage(sheet, index) {
-    // Se a página for template, isso significa que o usuário navegou para uma página nova que ainda não existe, então gera uma página template para essa página nova, 
-    // com os campos vazios e funções de adicionar título e tarefas.
+    // Se a página for template, isso significa que o usuário navegou para uma página nova que ainda não existe, 
+    // então gera uma página template, onde o usuário pode adicionar um titulo e criar a página.
     if (taskNote.isTemplatePage(index)) {
         templatePage(sheet, index);
         return;
@@ -103,7 +168,7 @@ function populatePage(sheet, index) {
 
     // Adiciona o número da página no elemento HTML
     const pageNum = container.querySelector('.page-number');
-    if (pageNum) pageNum.innerText = index + 1;
+    if (pageNum) pageNum.innerHTML = index + 1;
 
     // Captura os elementos necessários para popular a página, como título e tarefas
     const pageTitle = container.querySelector('.line.title .page-title');
@@ -111,13 +176,11 @@ function populatePage(sheet, index) {
     const tasksName = container.querySelectorAll('.line.task .task-text');
 
     // Adiciona o título da página no elemento HTML,configura as funções e desativa as "ajudas" do navegador no elemento HTML
-    pageTitle.innerText = page.title; // Adiciona o título da página
+    pageTitle.innerHTML = page.title; // Adiciona o título da página
     pageTitle.spellcheck = false; // Remove as linhas vermelhas (PC e Mobile)
     pageTitle.setAttribute('autocorrect', 'off'); // Específico para Safari/iOS
     pageTitle.setAttribute('autocomplete', 'off'); // Evita sugestões de preenchimento
 
-    // Função para editar o título da página, ao clicar uma vez aciona a edição, apertando 'enter' salva, 'esc' cancela e mantém o nome original
-    let keydownPage = 0;
     pageTitle.addEventListener('dblclick', (e) => {
         e.preventDefault();
         pageTitle.contentEditable = "true";
@@ -131,22 +194,45 @@ function populatePage(sheet, index) {
         selecao.removeAllRanges();
         selecao.addRange(range);
     });
+
+    // O blur agora age de forma inteligente, seja disparado pelo mouse (clique fora) ou pelo Enter/Esc no keydown
     pageTitle.addEventListener('blur', (e) => {
         e.preventDefault();
         pageTitle.contentEditable = "false";
-        if (keydownPage === 13) { // Enter
-            if (pageTitle.innerText !== page.title) { // Se o nome da tarefa foi alterado, salva a alteração, caso contrário, apenas sai do modo editável sem salvar
-                page.title = pageTitle.innerText.trim();
-                taskNote.updatePageTitle(page.uuid, page.title);
-            }
+
+        // Se o texto for diferente e não for vazio, salva.
+        // Se clicarem fora com o texto vazio, cai no 'else' e restaura o nome original.
+        const titleText = pageTitle.innerHTML.trim();
+        if (titleText !== page.title && titleText.length > 0) {
+            page.title = titleText;
+            taskNote.updatePageTitle(page.uuid, page.title);
         } else
-            pageTitle.innerText = page.title; // Se não for 'enter', cancela a edição e mantém o nome original
+            pageTitle.innerHTML = page.title;
     });
+
     pageTitle.addEventListener('keydown', (e) => {
-        keydownPage = e.keyCode;
-        if (e.keyCode === 13 || e.keyCode === 27) { // Enter ou Esc
+        // Usar textContent é mais seguro que innerHTML para contar caracteres reais
+        const textContent = pageTitle.textContent.trim();
+        const len = textContent.length;
+
+        if (e.key === 'Enter') {
+            e.preventDefault(); // Sempre evita que o Enter crie uma quebra de linha visual (<br>)
+            if (len > 0)
+                pageTitle.blur(); // Se passou no requisito (maior que 0), aciona o blur para salvar e sair
+            // Se len for 0, o código não faz NADA. A edição continua travada ali até digitar algo ou apertar Esc/clicar fora.
+
+        } else if (e.key === 'Escape') {
             e.preventDefault();
-            pageTitle.blur();
+            pageTitle.innerHTML = page.title; // Restaura o original imediatamente
+            pageTitle.blur(); // Sai da edição (vai passar pelo blur, mas não salvará nada por cima)
+
+        } else if (len >= 30) {
+            // Lista de teclas que devem SEMPRE funcionar
+            const allowedKeys = [
+                'Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'
+            ];
+            if (!allowedKeys.includes(e.key))
+                e.preventDefault();
         }
     });
 
@@ -155,21 +241,19 @@ function populatePage(sheet, index) {
     const currentTaskCount = tasksData ? tasksData.length : 0;
     const maxTasksPerPage = taskNote.getTasksPerPage();
     let clickTimer = null;
-    let keydownTask = 0;
 
     // Adiciona as tarefas no elemento HTML, configura as funções e desativa as "ajudas" do navegador no elemento HTML.
-    // Adiciona função de editar o nome da tarefa com dois cliques, função de concluir a tarefa com um clique. Na edição da tarefa, 'enter' salva e 'esc' cancela.
     if (currentTaskCount > 0) {
         tasksData.forEach((data, i) => {
             const taskName = tasksName[i];
-            lineTasks[i].dataset.uuid = data.uuid; // Adiciona o uuid da tarefa no dataset do elemento HTML para ser usado nas funções de editar e concluir a tarefa
-            taskName.innerText = data.name; // Adiciona o nome da tarefa
-            if (data.archived) taskName.classList.add('task-archived'); // Adiciona a classe no elemenot HTML para manipulação via css
+            lineTasks[i].dataset.uuid = data.uuid; // Adiciona o uuid da tarefa no dataset do elemento HTML
+            taskName.innerHTML = data.name; // Adiciona o nome da tarefa
+            if (data.completed) taskName.classList.add('task-completed');
 
             // Desativa as "ajudas" do navegador
-            taskName.spellcheck = false; // Remove as linhas vermelhas (PC e Mobile)
-            taskName.setAttribute('autocorrect', 'off'); // Específico para Safari/iOS
-            taskName.setAttribute('autocomplete', 'off'); // Evita sugestões de preenchimento
+            taskName.spellcheck = false;
+            taskName.setAttribute('autocorrect', 'off');
+            taskName.setAttribute('autocomplete', 'off');
 
             taskName.addEventListener('dblclick', (e) => {
                 e.preventDefault();
@@ -177,7 +261,6 @@ function populatePage(sheet, index) {
                 taskName.contentEditable = "true";
                 taskName.focus();
 
-                // Abaixo usando range & selection, sempre que clicar para editar o ponteiro vai pro final da frase
                 const range = document.createRange();
                 const selecao = window.getSelection();
                 range.selectNodeContents(taskName);
@@ -185,39 +268,62 @@ function populatePage(sheet, index) {
                 selecao.removeAllRanges();
                 selecao.addRange(range);
             });
+
             taskName.addEventListener('click', (e) => {
-                // Verificação e conometro para não conflitar com duplo clique
                 if (e.detail === 1) {
                     clickTimer = setTimeout(() => {
                         e.preventDefault();
-                        if (!taskName.contentEditable) {
-                            taskName.innerText = data.name;
+                        if (!taskName.contentEditable || taskName.contentEditable === "false") {
                             window.getSelection().removeAllRanges();
-                            taskNote.taskComplete(data.uuid, !data.completed);
+                            taskName.innerHTML = data.name;
+                            data.completed = !data.completed;
+                            taskName.classList[(data.completed) ? 'add' : 'remove']('task-completed');
+                            taskNote.taskComplete(data.uuid, data.completed);
                         }
-                    }, 250); // 250ms é o padrão universal para tolerância de duplo clique de acordo com minhas pesquisas, mas pode ser ajustado
+                    }, 250);
                 }
             });
+
+            // O blur agora age de forma inteligente, seja disparado pelo mouse (clique fora) ou pelo Enter no keydown
             taskName.addEventListener('blur', (e) => {
                 e.preventDefault();
                 taskName.contentEditable = "false";
-                if (keydownTask === 13) { // Enter
-                    if (taskName.innerText !== data.name) { // Se o nome da tarefa foi alterado, salva a alteração, caso contrário, apenas sai do modo editável sem salvar
-                        data.name = taskName.innerText.trim();
-                        taskNote.updateTaskName(data.uuid, data.name);
-                    }
+
+                // Se o texto for diferente e não for vazio, salva.
+                // Se clicarem fora com o texto vazio, ele cai no 'else' e restaura o nome original.
+                const taskText = taskName.innerHTML.trim();
+                if (taskText !== data.name && taskText.length > 0) {
+                    data.name = taskText;
+                    taskNote.updateTaskName(data.uuid, data.name);
                 } else
-                    taskName.innerText = data.name; // Se não for 'enter', cancela a edição e mantém o nome original
+                    taskName.innerHTML = data.name;
             });
+
             taskName.addEventListener('keydown', (e) => {
-                keydownTask = e.keyCode;
-                if (e.keyCode === 13 || e.keyCode === 27) { // Enter ou Esc
+                const textContent = taskName.textContent.trim();
+                const len = textContent.length;
+
+                if (e.key === 'Enter') {
+                    e.preventDefault(); // Sempre evita que o Enter crie uma quebra de linha visual (<br>)
+                    if (len > 0)
+                        taskName.blur(); // Se passou no requisito (maior que 0), aciona o blur para salvar e sair
+                    // Se len for 0, o código não faz NADA. A edição continua travada ali até ele digitar ou apertar Esc/clicar fora.
+
+                } else if (e.key === 'Escape') {
                     e.preventDefault();
-                    taskName.blur();
+                    taskName.innerHTML = data.name; // Restaura o original imediatamente
+                    taskName.blur(); // Sai da edição (vai passar pelo blur, mas como o texto agora é igual ao data.name, não salvará nada por cima)
+
+                } else if (len >= 30) {
+                    const allowedKeys = [
+                        'Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'
+                    ];
+                    if (!allowedKeys.includes(e.key))
+                        e.preventDefault();
                 }
             });
         });
-    }
+    };
 
     let keydownTemplate = 0;
     if (currentTaskCount < maxTasksPerPage) {
@@ -230,8 +336,9 @@ function populatePage(sheet, index) {
             const archiveButton = templateTaskLine.querySelector('.archive');
             if (archiveButton) archiveButton.classList.add('disabled');
 
-            // Configura o visual de "Template de Nova Tarefa"
-            templateTaskName.innerText = "Nova tarefa..";
+            // Configura o placeholfer visual
+            const templateName = languageController.getTextLanguage('controls/newTask'); // Texto template para o nome da tarefa
+            templateTaskName.innerHTML = templateName; // Texto template para o nome da tarefa
             templateTaskName.classList.add('task-template');
 
             // Tirar as "ajudas" do navegador do campo de nova tarefa
@@ -242,26 +349,43 @@ function populatePage(sheet, index) {
             templateTaskName.addEventListener('dblclick', (e) => {
                 e.preventDefault();
                 templateTaskName.contentEditable = "true";
-                templateTaskName.innerText = ""; // Limpa o texto "+ Adicionar nova tarefa..." ao entrar no modo editável
+                templateTaskName.innerHTML = ""; // Limpa o texto "+ Adicionar nova tarefa..." ao entrar no modo editável
                 templateTaskName.focus();
             });
             templateTaskName.addEventListener('blur', (e) => {
                 e.preventDefault();
                 templateTaskName.contentEditable = "false";
-                if (keydownTemplate === 13) { // Enter
-                    const newTaskName = templateTaskName.innerText.trim();
-                    if (newTaskName !== '') { // Se o nome da tarefa foi alterado, salva a alteração, caso contrário, apenas sai do modo editável sem salvar
+                if (keydownTemplate === 'Enter') {
+                    const newTaskName = templateTaskName.innerHTML.trim();
+                    if (newTaskName !== '' && newTaskName.length > 0) { // Se o nome da tarefa foi alterado, salva a alteração, caso contrário, apenas sai do modo editável sem salvar
                         taskNote.newTask(page.uuid, newTaskName);
                         populatePage(sheet, index);
                     }
                 } else
-                    templateTaskName.innerText = ""; // Se não for 'enter', cancela a edição e mantém o nome original
+                    templateTaskName.innerHTML = templateName; // Se não for 'enter', cancela a edição e mantém o nome original
             });
             templateTaskName.addEventListener('keydown', (e) => {
-                keydownTemplate = e.keyCode;
-                if (e.keyCode === 13 || e.keyCode === 27) { // Enter ou Esc
+                // Mantendo sua variável caso seja usada em outro lugar (recomendado usar e.key)
+                keydownTemplate = e.key;
+
+                // Usar textContent é mais seguro que innerHTML para contar caracteres reais
+                const len = templateTaskName.textContent.trim().length;
+
+                if (e.key === 'Enter' || e.key === 'Escape') {
                     e.preventDefault();
                     templateTaskName.blur();
+                } else if (len >= 30) {
+                    // Lista de teclas que devem SEMPRE funcionar
+                    const allowedKeys = [
+                        'Backspace',
+                        'Delete',
+                        'ArrowLeft',
+                        'ArrowRight',
+                        'ArrowUp',
+                        'ArrowDown'
+                    ];
+                    if (!allowedKeys.includes(e.key))
+                        e.preventDefault();
                 }
             });
         }
@@ -271,7 +395,7 @@ function populatePage(sheet, index) {
     const interaction = getNavInteraction(index, taskNote.getLastPageIndex());
     const lineNav = container.querySelector('.line .nav');
     lineNav.dataset.interaction = (interaction === "closed") ? (index % 2 === 0) ? 'prev' : 'next' : interaction; // Se a interação for 'closed', defina como 'prev' para páginas pares e 'next' para páginas ímpares, caso contrário, mantenha a interação original (prev ou next)
-    lineNav.dataset.lang = `notebook/controls/${interaction}`;
+    lineNav.dataset.lang = `controls/${interaction}`;
 
     update();
 }
@@ -289,49 +413,70 @@ function templatePage(sheet, index) {
 
     // Termina de capturar os elementos após a limpeza
     const pageNum = container.querySelector('.page-number');
-    pageNum.innerText = index + 1;
+    pageNum.innerHTML = index + 1;
 
     // Adiciona o template de título da página no elemento HTML, configura as funções e desativa as "ajudas" do navegador no elemento HTML
     const pageTitle = container.querySelector('.line.title .page-title');
-    const templateTitle = "Adicionar Título..";
-    pageTitle.innerText = templateTitle; // Texto template para o título da página
+    const templateTitle = languageController.getTextLanguage('controls/newPage'); // Texto template para o título da página
+    pageTitle.innerHTML = templateTitle; // Texto template para o título da página
     pageTitle.spellcheck = false; // Remove as linhas vermelhas (PC e Mobile)
     pageTitle.setAttribute('autocorrect', 'off'); // Específico para Safari/iOS
     pageTitle.setAttribute('autocomplete', 'off'); // Evita sugestões de preenchimento
 
-    // Função para editar o título da página, ao clicar uma vez aciona a edição, apertando 'enter' salva, 'esc' cancela e mantém o nome original
-    let keydown = 0;
     pageTitle.addEventListener('dblclick', (e) => {
         e.preventDefault();
         pageTitle.contentEditable = "true";
-        pageTitle.innerText = ''; // Limpa o texto template ao entrar no modo editável
         pageTitle.focus();
+
+        // Abaixo usando range & selection, sempre que clicar para editar o ponteiro vai pro final da frase
+        const range = document.createRange();
+        const selecao = window.getSelection();
+        range.selectNodeContents(pageTitle);
+        range.collapse(false);
+        selecao.removeAllRanges();
+        selecao.addRange(range);
     });
+
+    // O blur agora age de forma inteligente, seja disparado pelo mouse (clique fora) ou pelo Enter/Esc no keydown
     pageTitle.addEventListener('blur', (e) => {
         e.preventDefault();
         pageTitle.contentEditable = "false";
-        if (keydown === 13) { // Enter
-            const titleText = pageTitle.innerText.trim();
-            if (titleText !== '') {
-                const newPageId = taskNote.newPage(titleText);
-                if (newPageId) 
-                    // Após criar a página, repopula para mostrar como página normal
-                    populatePage(sheet, index);
-                else 
-                    // Se falhar ao criar, resetar para template
-                    pageTitle.innerText = templateTitle;
-            } else 
-                // Se título vazio, resetar para template
-                pageTitle.innerText = templateTitle;
-        } else 
-            // Se não for Enter (e.g., Esc ou blur), resetar para template
-            pageTitle.innerText = templateTitle;
+
+        const titleText = pageTitle.innerHTML.trim();
+
+        // Se o texto for diferente e não for vazio, salva.
+        // Se clicarem fora com o texto vazio, cai no 'else' e restaura o nome original.
+        if (titleText !== page.title && titleText.length > 0) {
+            page.title = titleText;
+            taskNote.updatePageTitle(page.uuid, page.title);
+        } else
+            pageTitle.innerHTML = page.title;
     });
+
     pageTitle.addEventListener('keydown', (e) => {
-        keydown = e.keyCode;
-        if (e.keyCode === 13 || e.keyCode === 27) { // Enter ou Esc
+        // Usar textContent é mais seguro que innerHTML para contar caracteres reais
+        const textContent = pageTitle.textContent.trim();
+        const len = textContent.length;
+
+        if (e.key === 'Enter') {
+            e.preventDefault(); // Sempre evita que o Enter crie uma quebra de linha visual (<br>)
+            if (len > 0)
+                pageTitle.blur(); // Se passou no requisito (maior que 0), aciona o blur para salvar e sair
+            // Se len for 0, o código não faz NADA. A edição continua travada ali até digitar algo ou apertar Esc/clicar fora.
+
+        } else if (e.key === 'Escape') {
             e.preventDefault();
-            pageTitle.blur();
+            pageTitle.innerHTML = page.title; // Restaura o original imediatamente
+            pageTitle.blur(); // Sai da edição (vai passar pelo blur, mas não salvará nada por cima)
+
+        } else if (len >= 30) {
+            // Lista de teclas que devem SEMPRE funcionar
+            const allowedKeys = [
+                'Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'
+            ];
+            if (!allowedKeys.includes(e.key)) {
+                e.preventDefault();
+            }
         }
     });
 
@@ -339,7 +484,7 @@ function templatePage(sheet, index) {
     const interaction = getNavInteraction(index, taskNote.getLastPageIndex());
     const lineNav = container.querySelector('.line .nav');
     lineNav.dataset.interaction = (interaction === "closed") ? (index % 2 === 0) ? 'prev' : 'next' : interaction; // Se a interação for 'closed', defina como 'prev' para páginas pares e 'next' para páginas ímpares, caso contrário, mantenha a interação original (prev ou next)
-    lineNav.dataset.lang = `notebook/controls/${interaction}`;
+    lineNav.dataset.lang = `controls/${interaction}`;
 
     update();
 }
@@ -356,7 +501,7 @@ function cleanPage(container) {
     const resetTextElement = (element) => {
         if (!element) return null;
         const clone = element.cloneNode(true);
-        clone.innerText = '';
+        clone.innerHTML = '';
         clone.classList.remove('task-template', 'task-archived');
         clone.contentEditable = false;
         clone.removeAttribute('spellcheck');
@@ -369,7 +514,7 @@ function cleanPage(container) {
     resetTextElement(container.querySelector('.page-title'));
 
     const pageNum = container.querySelector('.page-number');
-    if (pageNum) pageNum.innerText = '';
+    if (pageNum) pageNum.innerHTML = '';
 
     const lineTasks = container.querySelectorAll('.line.task');
     lineTasks.forEach(line => {
@@ -388,7 +533,7 @@ function cleanPage(container) {
 
     const lineNav = container.querySelector('.line .nav');
     if (lineNav) {
-        lineNav.innerText = '';
+        lineNav.innerHTML = '';
         delete lineNav.dataset.interaction;
         delete lineNav.dataset.lang;
     }
@@ -530,7 +675,7 @@ function archivePage(el) {
     if (page) {
         taskNote.archivePage(page.uuid);
         const state = taskNote.getState();
-        if (state === 'OPENED') {
+        if (state === 'OPENED')
             if (index % 2 === 0) {
                 populatePage(taskNote.dom.sheetLeft, index);
                 populatePage(taskNote.dom.sheetRight, index + 1);
@@ -538,41 +683,15 @@ function archivePage(el) {
                 populatePage(taskNote.dom.sheetLeft, index - 1);
                 populatePage(taskNote.dom.sheetRight, index);
             }
-        } else if (state === 'CLOSED_FRONT') {
+        else if (state === 'CLOSED_FRONT')
             populatePage(taskNote.dom.sheetLeft, index);
-        } else if (state === 'CLOSED_BACK') {
+        else if (state === 'CLOSED_BACK')
             populatePage(taskNote.dom.sheetRight, index);
-        }
+
     } else
         throw new Error(`ArchivePage Error: Page data not found for the current page index.`);
 }
 
-
-// function toggleLanguage() {
-//     metadata.language = metadata.language === 'en' ? 'pt' : 'en';
-//     if (typeof setLanguage === 'function') setLanguage(metadata.language);
-//     updateUI(); // Força a atualização da UI para atualizar botões Next/Prev e afins
-// }
-
-
-
-
 document.addEventListener('DOMContentLoaded', () => {
     initialize(metadata.debug);
 });
-
-
-
-
-/**
- * Abre e fecha o modal de histórico.
- */
-function toggleHistory() {
-    const modal = document.getElementById('history-modal');
-    if (modal.classList.contains('hidden')) {
-        populateHistoryModal();
-        modal.classList.remove('hidden');
-    } else {
-        modal.classList.add('hidden');
-    }
-}
