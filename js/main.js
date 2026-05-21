@@ -2,23 +2,28 @@ import { NotebookController } from './controller/NotebookController.js';
 import { getTextLanguage, reloadLanguage } from './language/language.js';
 import { METADATA } from './metadata.js';
 
-/** @type {NotebookController} */
+/**
+ * @type {NotebookController} 
+ */
 const taskNote = new NotebookController();
 
+/** @constant {number} Limite máximo de caracteres para evitar quebra do layout visual do caderno. */
+const MAX_TEXT_LENGTH = 30;
+
 /**
- * Função inicial, roda assim que o site carrega é responsável por:
- *  * Definir os elementos do caderno que serão usados
- *  * Seta quantidade de tarefas máxima
- *  * Seta as funções de clique do mouse
+ * Função inicial, roda assim que o DOM é completamente carregado, responsável por:
+ *  * Definir os elementos HTML essenciais
+ *  * Definir quantidade de tarefas máxima p/página
+ *  * Definir as funções de clique do mouse
  *  * Verifica possiveis erros
  */
 function initialize() {
-    // VERIFICAÇÃO CRÍTICA: O container principal do caderno existe no HTML?
+    // Busca o container principal. Sem ele, a aplicação não tem onde renderizar.
     const notebookContainer = document.querySelector('.notebook');
     if (!notebookContainer)
         throw new Error(`Initialize Error: The 'notebook container' not found in HTML.`);
 
-    // Dicionário de elementos internos obrigatórios, usando id dos elementos do HTML
+    // Dicionário de elementos internos obrigatórios, usando os ids dos elementos
     const requiredElements = {
         pageLeft: '#page-left',
         pageRight: '#page-right',
@@ -31,9 +36,9 @@ function initialize() {
 
     taskNote.dom.notebook = notebookContainer;
     taskNote.setTasksPerPage(18); // Configura a quantidade de tarefas por página.
-    let domErrors = false;
 
-    // VERIFICAÇÃO CRÍTICA: Os elementos internos existem?
+    // Itera sobre os elementos requeridos e os vincula ao controlador (taskNote).
+    let domErrors = false;
     for (const [key, id] of Object.entries(requiredElements)) {
         const el = notebookContainer.querySelector(id);
         if (!el) {
@@ -48,33 +53,49 @@ function initialize() {
     if (domErrors)
         throw new Error('Initialize Error: Initialization aborted, incomplete HTML structure.');
 
-    // Chama Handleinteraction ao clicar em qualquer um dos botões de navegação.
+    // Delegação de eventos estáticos: Estes botões não mudam estruturalmente, 
+    // então podemos anexar os eventos uma única vez na inicialização.
     notebookContainer.querySelectorAll('.nav').forEach(btn => {
-        btn.addEventListener('click', function () {
-            handleBookInteraction(this);
-        });
+        btn.addEventListener('click', function () { handleBookInteraction(this); });
     });
 
     notebookContainer.querySelectorAll('.line.title .archive').forEach(btn => {
-        btn.addEventListener('click', function () {
-            archivePage(this);
-        });
+        btn.addEventListener('click', function () { archivePage(this); });
     });
 
     notebookContainer.querySelectorAll('.line.task .archive').forEach(btn => {
-        btn.addEventListener('click', function () {
-            archiveTask(this);
-        });
+        btn.addEventListener('click', function () { archiveTask(this); });
     });
+
+    // Código para voltar a página pro estado salvo no localstorage
+    switch (taskNote.getState()) {
+        case "OPENED": {
+            if (!taskNote.getLastAction())
+                changeState('close_front');
+            else {
+                populatePage(taskNote.dom.sheetLeft, taskNote.getPageIndex());
+                populatePage(taskNote.dom.sheetRight, taskNote.getPageIndex() + 1);
+            }
+            break;
+        }
+        case "CLOSED_FRONT": {
+            changeState('close_front');
+            break;
+        }
+        case "CLOSED_BACK": {
+            changeState('close_back');
+            break;
+        }
+    }
 }
 
 /**
- * ......
+ * Atualiza metadados visuais na interface, lendo os dados do arquivo de metadata.
+ * E tbm atualiza o sistema de internacionalização.
  */
 function update() {
-    reloadLanguage(); // ...
+    reloadLanguage(); // Atualiza o idioma atual da interface.
 
-    // ...
     const metadataElements = document.querySelectorAll('[data-metadata]');
     metadataElements.forEach(el => {
         const key = el.dataset.metadata;
@@ -85,7 +106,7 @@ function update() {
         switch (key) {
             case 'title':
             case 'description':
-                content = getTextLanguage(key);
+                content = getTextLanguage(key); // Captura o texto traduzido do sistema de internacionalização
                 break;
             case 'version':
                 content = ` v${METADATA.version}`;
@@ -98,13 +119,14 @@ function update() {
                 return; // Chave desconhecida...
         }
 
-        // ...
-        if (el instanceof HTMLMetaElement) 
+        // Aplica o conteúdo no HTML. Se for uma tag <meta>, atualiza o atributo 'content'.
+        // Se não atualiza o 'textContent'.
+        if (el instanceof HTMLMetaElement)
             el.setAttribute('content', content);
-        else 
-            if (shouldAppend) 
+        else
+            if (shouldAppend)
                 el.textContent += content;
-            else 
+            else
                 el.textContent = content;
     });
 }
@@ -112,13 +134,12 @@ function update() {
 /**
  * Função para controlar a mudança de estado do caderno, manipulando as classes HTML e populando as páginas conforme necessário.
  * @param {string} action - Um de: 'open_front', 'open_back', 'close_front', 'close_back'
- * @returns {void}
  */
 function changeState(action) {
-    // Carrega a configuração da ação de mudança de estado, se ação for invalid emite um erro fatal.
+    // Carrega a configuração da ação de mudança de estado, se ação for inválida emite um erro fatal.
     const config = taskNote.changeState(action);
 
-    // Usando a configuração, realiza o controle das classes HTML para manipulação via CSS
+    // Usando a configuração para manipular as classes CSS e engatilhar as animações visuais 
     taskNote.dom[config.side].classList[config.method]('closed');
     taskNote.dom.notebook.classList[config.method](config.class);
 
@@ -128,14 +149,123 @@ function changeState(action) {
 }
 
 /**
+ * Resolve vazamentos de memória (Memory Leaks) clonando nós do DOM.
+ * Remover e re-inserir um elemento é a forma mais segura de
+ * destruir todos os eventListeners antigos presos a ele.
+ * @param {HTMLElement} element Elemento a ser "purificado".
+ * @returns {HTMLElement} O novo clone limpo inserido no DOM.
+ */
+function replaceWithClone(element) {
+    if (!element) return null;
+    const clone = element.cloneNode(true);
+    element.parentNode.replaceChild(clone, element);
+    return clone;
+}
+
+/**
+ * Centraliza a mecânica de tornar um texto editável, removendo redundâncias de código.
+ * Processa as lógicas de Enter, Escape e Blur.
+ * 
+ * @param {HTMLElement} element O elemento HTML
+ * @param {string} placeholderText Texto placeholder de backup caso o usuário cancele a edição
+ * @param {Function} onSave Callback executado com o 'sucesso' na edição
+ * @param {boolean} [clearOnFocus=false] Se true, limpa o elemento ao entrar em edição
+ * @returns {HTMLElement} O elemento DOM (clonado e seguro).
+ */
+function makeEditable(element, placeholderText, onSave, clearOnFocus = false) {
+    // Clona para garantir que não existam EventListeners de renderizações passadas empilhados
+    const el = replaceWithClone(element);
+
+    // Variável para armazenar o "último texto salvo"
+    // Inicialmente ela recebe o placeholderText passado como parâmetro.
+    let currentSavedText = placeholderText;
+
+    el.contentEditable = "false";
+    el.spellcheck = false;
+    el.setAttribute('autocorrect', 'off');
+    el.setAttribute('autocomplete', 'off');
+
+    // Move o cursor (Caret) para o exato final do texto
+    el.addEventListener('dblclick', (e) => {
+        e.preventDefault();
+        el.contentEditable = "true";
+        if (clearOnFocus) el.innerHTML = '';
+        el.focus();
+
+        const range = document.createRange();
+        const selecao = window.getSelection();
+        range.selectNodeContents(el);
+        range.collapse(false);
+        selecao.removeAllRanges();
+        selecao.addRange(range);
+    });
+
+    // O blur atua como nosso "hub de salvamento". Se o foco sai, avaliamos o que sobrou no HTML.
+    el.addEventListener('blur', (e) => {
+        e.preventDefault();
+        el.contentEditable = "false";
+
+        // Se o texto mudou e não está vazio, disparamos a função de salvamento.
+        const currentText = el.textContent.trim();
+        if (currentText !== '' && currentText !== currentSavedText) {
+            onSave(currentText);
+            currentSavedText = currentText;
+        } else
+            // Se o texto estiver vazio ou inalterado, abortamos revertendo pro original.
+            el.innerHTML = currentSavedText;
+    });
+
+    el.addEventListener('keydown', (e) => {
+        const len = el.textContent.trim().length;
+
+        if (e.key === 'Enter') {
+            e.preventDefault(); // Impede criação de nova linha <br>
+            // Forçamos o blur(). Isso acionará o listener de blur acima, que validará e salvará o texto.
+            if (len > 0) el.blur();
+        } else if (e.key === 'Escape') {
+            e.preventDefault();
+            // Para cancelar, injetamos o texto original de volta. 
+            // Assim, quando o blur() acontecer, ele cairá no bloco 'else' de segurança e não salvará nada.
+            el.innerHTML = currentSavedText;
+            el.blur();
+        } else if (len >= MAX_TEXT_LENGTH) {
+            // Bloqueia teclas de adição se atingiu o limite, mas permite apagar e navegar
+            const allowedKeys = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'];
+            if (!allowedKeys.includes(e.key)) {
+                e.preventDefault();
+            }
+        }
+    });
+
+    return el;
+}
+
+/**
+ * Função de auxílio que avalia e aplica a interação de navegação
+ * @param {HTMLElement} container Elemento HTML do DOM
+ * @param {number} index Indice da página
+ */
+function configureNavigationInteraction(container, index) {
+    const interaction = getNavInteraction(index, taskNote.getLastPageIndex());
+    const lineNav = container.querySelector('.line .nav');
+
+    if (lineNav) {
+        // Se a interação for "fechar", checamos se estamos na capa da frente (par) ou de trás (ímpar)
+        lineNav.dataset.interaction = (interaction === "closed")
+            ? (index % 2 === 0 ? 'prev' : 'next')
+            : interaction;
+        lineNav.dataset.lang = `controls/${interaction}`;
+    }
+}
+
+/**
  * Popula a página com as informações, controlando e manipulando tudo no HTML minuciosamente.
- * @param {HTMLDivElement} sheet - O elemento HTML da página a ser populada, que pode ser a folha esquerda ou direita do caderno.
- * @param {number} index - O índice da página a ser populada.
+ * @param {HTMLDivElement} sheet O container DOM da folha (esquerda ou direita).
+ * @param {number} index - Indice da página a ser populada.
  * @returns {void}
  */
 function populatePage(sheet, index) {
-    // Se a página for template, isso significa que o usuário navegou para uma página nova que ainda não existe, 
-    // então gera uma página template, onde o usuário pode adicionar um titulo e criar a página.
+    // Verifica se o usuário chegou a uma página nova/vazia
     if (taskNote.isTemplatePage(index)) {
         templatePage(sheet, index);
         return;
@@ -145,247 +275,97 @@ function populatePage(sheet, index) {
     const container = sheet.querySelector('.page-content');
     cleanPage(container);
 
-    // Captura os dados da página vindos do banco de dados local
+    // Captura os dados da página
     const page = taskNote.getPageData(index);
 
     // Adiciona o número da página no elemento HTML
     const pageNum = container.querySelector('.page-number');
     if (pageNum) pageNum.innerHTML = index + 1;
 
-    // Captura os elementos necessários para popular a página, como título e tarefas
-    const pageTitle = container.querySelector('.line.title .page-title');
+    // Configuração e funcionalidade de edição inline do título da página
+    let pageTitle = container.querySelector('.line.title .page-title');
+    pageTitle.innerHTML = page.title;
+    pageTitle = makeEditable(pageTitle, page.title, (newTitle) => {
+        page.title = newTitle;
+        taskNote.updatePageTitle(page.uuid, page.title);
+    });
+
+    // Captura os elementos necessários para popular a página
     const lineTasks = container.querySelectorAll('.line.task');
     const tasksName = container.querySelectorAll('.line.task .task-text');
 
-    // Adiciona o título da página no elemento HTML,configura as funções e desativa as "ajudas" do navegador no elemento HTML
-    pageTitle.innerHTML = page.title; // Adiciona o título da página
-    pageTitle.spellcheck = false; // Remove as linhas vermelhas (PC e Mobile)
-    pageTitle.setAttribute('autocorrect', 'off'); // Específico para Safari/iOS
-    pageTitle.setAttribute('autocomplete', 'off'); // Evita sugestões de preenchimento
-
-    pageTitle.addEventListener('dblclick', (e) => {
-        e.preventDefault();
-        pageTitle.contentEditable = "true";
-        pageTitle.focus();
-
-        // Abaixo usando range & selection, sempre que clicar para editar o ponteiro vai pro final da frase
-        const range = document.createRange();
-        const selecao = window.getSelection();
-        range.selectNodeContents(pageTitle);
-        range.collapse(false);
-        selecao.removeAllRanges();
-        selecao.addRange(range);
-    });
-
-    // O blur agora age de forma inteligente, seja disparado pelo mouse (clique fora) ou pelo Enter/Esc no keydown
-    pageTitle.addEventListener('blur', (e) => {
-        e.preventDefault();
-        pageTitle.contentEditable = "false";
-
-        // Se o texto for diferente e não for vazio, salva.
-        // Se clicarem fora com o texto vazio, cai no 'else' e restaura o nome original.
-        const titleText = pageTitle.innerHTML.trim();
-        if (titleText !== page.title && titleText.length > 0) {
-            page.title = titleText;
-            taskNote.updatePageTitle(page.uuid, page.title);
-        } else
-            pageTitle.innerHTML = page.title;
-    });
-
-    pageTitle.addEventListener('keydown', (e) => {
-        // Usar textContent é mais seguro que innerHTML para contar caracteres reais
-        const textContent = pageTitle.textContent.trim();
-        const len = textContent.length;
-
-        if (e.key === 'Enter') {
-            e.preventDefault(); // Sempre evita que o Enter crie uma quebra de linha visual (<br>)
-            if (len > 0)
-                pageTitle.blur(); // Se passou no requisito (maior que 0), aciona o blur para salvar e sair
-            // Se len for 0, o código não faz NADA. A edição continua travada ali até digitar algo ou apertar Esc/clicar fora.
-
-        } else if (e.key === 'Escape') {
-            e.preventDefault();
-            pageTitle.innerHTML = page.title; // Restaura o original imediatamente
-            pageTitle.blur(); // Sai da edição (vai passar pelo blur, mas não salvará nada por cima)
-
-        } else if (len >= 30) {
-            // Lista de teclas que devem SEMPRE funcionar
-            const allowedKeys = [
-                'Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'
-            ];
-            if (!allowedKeys.includes(e.key))
-                e.preventDefault();
-        }
-    });
-
-    // Captura os dados das tarefas destinadas a essa página.
+    // Dados das tarefas da página
     const tasksData = taskNote.getTasksData(page.uuid);
     const currentTaskCount = tasksData ? tasksData.length : 0;
     const maxTasksPerPage = taskNote.getTasksPerPage();
-    let clickTimer = null;
 
-    // Adiciona as tarefas no elemento HTML, configura as funções e desativa as "ajudas" do navegador no elemento HTML.
+    // Renderiza as tarefas existentes
     if (currentTaskCount > 0) {
         tasksData.forEach((data, i) => {
-            const taskName = tasksName[i];
-            lineTasks[i].dataset.uuid = data.uuid; // Adiciona o uuid da tarefa no dataset do elemento HTML
-            taskName.innerHTML = data.name; // Adiciona o nome da tarefa
-            if (data.completed) taskName.classList.add('task-completed');
+            let taskElement = tasksName[i];
+            const lineElement = lineTasks[i];
 
-            // Desativa as "ajudas" do navegador
-            taskName.spellcheck = false;
-            taskName.setAttribute('autocorrect', 'off');
-            taskName.setAttribute('autocomplete', 'off');
+            lineElement.dataset.uuid = data.uuid; // Vincula a linha física ao dado no banco
+            taskElement.innerHTML = data.name;
 
-            taskName.addEventListener('dblclick', (e) => {
-                e.preventDefault();
-                clearTimeout(clickTimer);
-                taskName.contentEditable = "true";
-                taskName.focus();
+            if (data.completed) taskElement.classList.add('task-completed');
 
-                const range = document.createRange();
-                const selecao = window.getSelection();
-                range.selectNodeContents(taskName);
-                range.collapse(false);
-                selecao.removeAllRanges();
-                selecao.addRange(range);
+            // Torna o texto da tarefa editável e lida com o duplo clique
+            taskElement = makeEditable(taskElement, data.name, (newName) => {
+                data.name = newName;
+                taskNote.updateTaskName(data.uuid, data.name);
             });
 
-            taskName.addEventListener('click', (e) => {
-                if (e.detail === 1) {
+            // Lida separadamente com o clique simples (concluir) usando setTimeout 
+            // para não conflitar com o duplo clique da edição.
+            let clickTimer = null;
+            taskElement.addEventListener('click', (e) => {
+                if (e.detail === 1)
                     clickTimer = setTimeout(() => {
                         e.preventDefault();
-                        if (!taskName.contentEditable || taskName.contentEditable === "false") {
+                        // Só conclui a tarefa se NÃO estivermos editando ela
+                        if (taskElement.contentEditable === "false" || !taskElement.isContentEditable) {
                             window.getSelection().removeAllRanges();
-                            taskName.innerHTML = data.name;
                             data.completed = !data.completed;
-                            taskName.classList[(data.completed) ? 'add' : 'remove']('task-completed');
+                            taskElement.classList.toggle('task-completed', data.completed);
                             taskNote.taskComplete(data.uuid, data.completed);
                         }
                     }, 250);
-                }
             });
 
-            // O blur agora age de forma inteligente, seja disparado pelo mouse (clique fora) ou pelo Enter no keydown
-            taskName.addEventListener('blur', (e) => {
-                e.preventDefault();
-                taskName.contentEditable = "false";
-
-                // Se o texto for diferente e não for vazio, salva.
-                // Se clicarem fora com o texto vazio, ele cai no 'else' e restaura o nome original.
-                const taskText = taskName.innerHTML.trim();
-                if (taskText !== data.name && taskText.length > 0) {
-                    data.name = taskText;
-                    taskNote.updateTaskName(data.uuid, data.name);
-                } else
-                    taskName.innerHTML = data.name;
-            });
-
-            taskName.addEventListener('keydown', (e) => {
-                const textContent = taskName.textContent.trim();
-                const len = textContent.length;
-
-                if (e.key === 'Enter') {
-                    e.preventDefault(); // Sempre evita que o Enter crie uma quebra de linha visual (<br>)
-                    if (len > 0)
-                        taskName.blur(); // Se passou no requisito (maior que 0), aciona o blur para salvar e sair
-                    // Se len for 0, o código não faz NADA. A edição continua travada ali até ele digitar ou apertar Esc/clicar fora.
-
-                } else if (e.key === 'Escape') {
-                    e.preventDefault();
-                    taskName.innerHTML = data.name; // Restaura o original imediatamente
-                    taskName.blur(); // Sai da edição (vai passar pelo blur, mas como o texto agora é igual ao data.name, não salvará nada por cima)
-
-                } else if (len >= 30) {
-                    const allowedKeys = [
-                        'Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'
-                    ];
-                    if (!allowedKeys.includes(e.key))
-                        e.preventDefault();
-                }
-            });
+            // Aborta o clique simples se detectarmos um duplo clique em andamento
+            taskElement.addEventListener('dblclick', () => clearTimeout(clickTimer));
         });
-    };
-
-    let keydownTemplate = 0;
-    if (currentTaskCount < maxTasksPerPage) {
-        // Verifica se os elementos HTML da próxima linha realmente existem
-        if (lineTasks[currentTaskCount] && tasksName[currentTaskCount]) {
-            const templateTaskName = tasksName[currentTaskCount];
-            const templateTaskLine = lineTasks[currentTaskCount];
-
-            // Desativar botão de arquivar tarefa
-            const archiveButton = templateTaskLine.querySelector('.archive');
-            if (archiveButton) archiveButton.classList.add('disabled');
-
-            // Configura o placeholfer visual
-            const templateName = getTextLanguage('controls/newTask'); // Texto template para o nome da tarefa
-            templateTaskName.innerHTML = templateName; // Texto template para o nome da tarefa
-            templateTaskName.classList.add('task-template');
-
-            // Tirar as "ajudas" do navegador do campo de nova tarefa
-            templateTaskName.spellcheck = false; // Remove as linhas vermelhas (PC e Mobile)
-            templateTaskName.setAttribute('autocorrect', 'off');
-            templateTaskName.setAttribute('autocomplete', 'off'); // Evita sugestões de preenchimento
-
-            templateTaskName.addEventListener('dblclick', (e) => {
-                e.preventDefault();
-                templateTaskName.contentEditable = "true";
-                templateTaskName.innerHTML = ""; // Limpa o texto "+ Adicionar nova tarefa..." ao entrar no modo editável
-                templateTaskName.focus();
-            });
-            templateTaskName.addEventListener('blur', (e) => {
-                e.preventDefault();
-                templateTaskName.contentEditable = "false";
-                if (keydownTemplate === 'Enter') {
-                    const newTaskName = templateTaskName.innerHTML.trim();
-                    if (newTaskName !== '' && newTaskName.length > 0) { // Se o nome da tarefa foi alterado, salva a alteração, caso contrário, apenas sai do modo editável sem salvar
-                        taskNote.newTask(page.uuid, newTaskName);
-                        populatePage(sheet, index);
-                    }
-                } else
-                    templateTaskName.innerHTML = templateName; // Se não for 'enter', cancela a edição e mantém o nome original
-            });
-            templateTaskName.addEventListener('keydown', (e) => {
-                // Mantendo sua variável caso seja usada em outro lugar (recomendado usar e.key)
-                keydownTemplate = e.key;
-
-                // Usar textContent é mais seguro que innerHTML para contar caracteres reais
-                const len = templateTaskName.textContent.trim().length;
-
-                if (e.key === 'Enter' || e.key === 'Escape') {
-                    e.preventDefault();
-                    templateTaskName.blur();
-                } else if (len >= 30) {
-                    // Lista de teclas que devem SEMPRE funcionar
-                    const allowedKeys = [
-                        'Backspace',
-                        'Delete',
-                        'ArrowLeft',
-                        'ArrowRight',
-                        'ArrowUp',
-                        'ArrowDown'
-                    ];
-                    if (!allowedKeys.includes(e.key))
-                        e.preventDefault();
-                }
-            });
-        }
     }
 
-    // Configura os botões de navegação, definindo a interação correta (prev, next ou closed) no dataset do botão para ser usada na função de handleBookInteraction, e também definindo o texto do tooltip do botão de acordo com a interação e a linguagem atual.
-    const interaction = getNavInteraction(index, taskNote.getLastPageIndex());
-    const lineNav = container.querySelector('.line .nav');
-    lineNav.dataset.interaction = (interaction === "closed") ? (index % 2 === 0) ? 'prev' : 'next' : interaction; // Se a interação for 'closed', defina como 'prev' para páginas pares e 'next' para páginas ímpares, caso contrário, mantenha a interação original (prev ou next)
-    lineNav.dataset.lang = `controls/${interaction}`;
+    // Se ainda houver espaço na página, gera a linha de "Nova Tarefa" (Template)
+    if (currentTaskCount < maxTasksPerPage && lineTasks[currentTaskCount]) {
+        let templateTaskName = tasksName[currentTaskCount];
+        const templateTaskLine = lineTasks[currentTaskCount];
 
+        // Desativa o botão de lixeira visualmente para a linha em branco
+        const archiveBtn = templateTaskLine.querySelector('.archive');
+        if (archiveBtn) archiveBtn.classList.add('disabled');
+
+        const templateName = getTextLanguage('controls/newTask');
+        templateTaskName.innerHTML = templateName;
+        templateTaskName.classList.add('task-template');
+
+        // Configura o comportamento de adicionar nova tarefa ao salvar
+        templateTaskName = makeEditable(templateTaskName, templateName, (newTaskName) => {
+            taskNote.newTask(page.uuid, newTaskName);
+            populatePage(sheet, index); // Repopula a página inteira para renderizar a nova tarefa e gerar o próximo template em branco
+        }, true); // true = Limpa o texto placeholder ao clicar
+    }
+
+    configureNavigationInteraction(container, index);
     update();
 }
 
 /**
- * Função para gerar uma página template, que é uma página com os campos vazios e funções de adicionar título e tarefas, usada quando o usuário navega para um índice de página que ainda não existe.
- * @param {HTMLDivElement} sheet - O elemento HTML da página a ser gerada como template.
- * @param {int} index Índice da página a ser gerada como template.
+ * Configura o HTML para exibir uma tela padrão inicial de criação de uma nova página.
+ * @param {HTMLDivElement} sheet O elemento DOM da folha
+ * @param {number} index Indice da página a ser gerada como template
  */
 function templatePage(sheet, index) {
     // Captura o container de conteúdo e faz uma limpeza antes de tudo
@@ -393,117 +373,53 @@ function templatePage(sheet, index) {
     cleanPage(container);
     container.classList.add('template');
 
-    // Termina de capturar os elementos após a limpeza
+    // Termina de capturar os elementos após a limpeza e adiciona o enumerador da página
     const pageNum = container.querySelector('.page-number');
     pageNum.innerHTML = index + 1;
 
-    // Adiciona o template de título da página no elemento HTML, configura as funções e desativa as "ajudas" do navegador no elemento HTML
-    const pageTitle = container.querySelector('.line.title .page-title');
-    const templateTitle = getTextLanguage('controls/newPage'); // Texto template para o título da página
-    pageTitle.innerHTML = templateTitle; // Texto template para o título da página
-    pageTitle.spellcheck = false; // Remove as linhas vermelhas (PC e Mobile)
-    pageTitle.setAttribute('autocorrect', 'off'); // Específico para Safari/iOS
-    pageTitle.setAttribute('autocomplete', 'off'); // Evita sugestões de preenchimento
+    let pageTitle = container.querySelector('.line.title .page-title');
+    const templateTitle = getTextLanguage('controls/newPage');
+    pageTitle.innerHTML = templateTitle;
 
-    pageTitle.addEventListener('dblclick', (e) => {
-        e.preventDefault();
-        pageTitle.contentEditable = "true";
-        pageTitle.innerHTML = '';
-        pageTitle.focus();
-    });
+    // Configura para criar a página nova assim que o usuário alterar o texto do template
+    pageTitle = makeEditable(pageTitle, templateTitle, (titleText) => {
+        pageTitle.title = titleText;
+        taskNote.newPage(titleText);
+        populatePage(sheet, index); // Atualiza visualmente trocando o modo template para modo de leitura/edição padrão
+    }, true);
 
-    // O blur agora age de forma inteligente, seja disparado pelo mouse (clique fora) ou pelo Enter/Esc no keydown
-    pageTitle.addEventListener('blur', (e) => {
-        e.preventDefault();
-        pageTitle.contentEditable = "false";
-        const titleText = pageTitle.innerHTML.trim();
-
-        // ...
-        if (titleText !== '' && titleText.length > 0) {
-            pageTitle.title = titleText;
-            taskNote.newPage(titleText);
-            populatePage(sheet, index)
-        } else
-            pageTitle.innerHTML = templateTitle;
-    });
-
-    pageTitle.addEventListener('keydown', (e) => {
-        // Usar textContent é mais seguro que innerHTML para contar caracteres reais
-        const textContent = pageTitle.textContent.trim();
-        const len = textContent.length;
-
-        if (e.key === 'Enter') {
-            e.preventDefault(); // Sempre evita que o Enter crie uma quebra de linha visual (<br>)
-            if (len > 0)
-                pageTitle.blur(); // Se passou no requisito (maior que 0), aciona o blur para salvar e sair
-            // Se len for 0, o código não faz NADA. A edição continua travada ali até digitar algo ou apertar Esc/clicar fora.
-
-        } else if (e.key === 'Escape') {
-            e.preventDefault();
-            pageTitle.innerHTML = templateTitle; // Restaura o original imediatamente
-            pageTitle.contentEditable = false;
-
-        } else if (len >= 30) {
-            // Lista de teclas que devem SEMPRE funcionar
-            const allowedKeys = [
-                'Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'
-            ];
-            if (!allowedKeys.includes(e.key)) {
-                e.preventDefault();
-            }
-        }
-    });
-
-    // Configura os botões de navegação, definindo a interação correta (prev, next ou closed) no dataset do botão para ser usada na função de handleBookInteraction, e também definindo o texto do tooltip do botão de acordo com a interação e a linguagem atual.
-    const interaction = getNavInteraction(index, taskNote.getLastPageIndex());
-    const lineNav = container.querySelector('.line .nav');
-    lineNav.dataset.interaction = (interaction === "closed") ? (index % 2 === 0) ? 'prev' : 'next' : interaction; // Se a interação for 'closed', defina como 'prev' para páginas pares e 'next' para páginas ímpares, caso contrário, mantenha a interação original (prev ou next)
-    lineNav.dataset.lang = `controls/${interaction}`;
-
+    configureNavigationInteraction(container, index);
     update();
 }
 
 /**
- * Função para limpar os dados da página, removendo títulos, tarefas, botões e eventListeners antigos para evitar conflitos e bugs.
- * @param {HTMLDivElement} container - O container da página a ser limpa 
+ * Limpa os dados da página, removendo títulos, tarefas, botões e 
+ * resolvendo possíveis vazamentos de memória removendo eventListeners 
+ * antigos além de evitar conflitos e bugs.
+ * @param {HTMLDivElement} container O container da página a ser limpa 
  */
 function cleanPage(container) {
-    if (!container || !(container instanceof HTMLElement)) return;
-
+    if (!container || !(container instanceof HTMLDivElement)) return;
     container.classList.remove('template');
-
-    const resetTextElement = (element) => {
-        if (!element) return null;
-        const clone = element.cloneNode(true);
-        clone.innerHTML = '';
-        clone.classList.remove('task-template', 'task-archived');
-        clone.contentEditable = false;
-        clone.removeAttribute('spellcheck');
-        clone.removeAttribute('autocorrect');
-        clone.removeAttribute('autocomplete');
-        element.parentNode.replaceChild(clone, element);
-        return clone;
-    };
-
-    resetTextElement(container.querySelector('.page-title'));
 
     const pageNum = container.querySelector('.page-number');
     if (pageNum) pageNum.innerHTML = '';
 
     const lineTasks = container.querySelectorAll('.line.task');
     lineTasks.forEach(line => {
-        delete line.dataset.uuid;
+        delete line.dataset.uuid; // Remove identificadores passados
         line.classList.remove('task-archived');
 
-        const archiveButton = line.querySelector('.archive');
-        if (archiveButton) archiveButton.classList.remove('disabled');
+        const archiveBtn = line.querySelector('.archive');
+        if (archiveBtn) archiveBtn.classList.remove('disabled');
     });
 
+    // Limpa textos. (Nota: os listeners agora são purgados ativamente na função makeEditable)
     const tasksName = container.querySelectorAll('.line.task .task-text');
-    tasksName.forEach(taskName => resetTextElement(taskName));
-
-    const titlePage = container.querySelector('.line.title .page-title');
-    if (titlePage) resetTextElement(titlePage);
+    tasksName.forEach(task => {
+        task.innerHTML = '';
+        task.classList.remove('task-template', 'task-archived');
+    });
 
     const lineNav = container.querySelector('.line .nav');
     if (lineNav) {
@@ -514,48 +430,54 @@ function cleanPage(container) {
 }
 
 /**
- * Função para determinar a interação de navegação (prev, next ou closed) com base no índice da página atual e o último índice de página.
- * @param {int} index Índice da página atual.
- * @param {int} lastIndex Último índice de página.
- * @returns {string} Retorna a interação de navegação.
+ * Determina logicamente qual será o comportamento de navegação (prev, next ou closed) na folha atual.
+ * @param {number} index Indice da página atual
+ * @param {number} lastIndex Indice máximo existente no caderno
+ * @returns {string} Retorna a interação de navegação (prev, next ou closed)
  */
 function getNavInteraction(index, lastIndex) {
     const pageCount = taskNote.getPageCount();
     let interaction = '';
+
+    // Páginas pares estão na folha da esquerda, ímpares na folha da direita
     if (index % 2 === 0)
-        if (index === 0)
-            interaction = 'closed';
-        else interaction = 'prev';
+        interaction = (index === 0) ? 'closed' : 'prev';
     else
-        if (index === lastIndex + 1) interaction = 'closed';
-        else interaction = 'next';
+        interaction = (index === lastIndex + 1) ? 'closed' : 'next';
+
+    // Se não houver páginas criadas e tentar avançar, apenas fecha o caderno.
     if (interaction === 'next' && pageCount === 0)
         interaction = 'closed';
+
     return interaction;
 }
 
 /**
- * Função para lidar com as interações de navegação do caderno, como abrir, fechar, ir para a próxima página ou voltar para a página anterior, dependendo do botão clicado e da interação definida no dataset do botão.
- * @param {HTMLButtonElement} el - O elemento do botão que foi clicado para acionar a interação. Deve conter um dataset com a propriedade 'interaction' definida como 'prev', 'next' para determinar a ação a ser tomada. 
+ * Função para lidar com as interações de navegação do caderno, como abrir, fechar, 
+ * ir para página anterior/próxima. Dependendo do botão clicado e da interação definida no dataset do botão.
+ * @param {HTMLButtonElement} el Botão de navegação clicado. Deve conter um dataset 'interaction' definida 
  * @returns {void}
  */
 function handleBookInteraction(el) {
     const interaction = el.dataset.interaction;
     if (!interaction) return;
-    else if (interaction === 'prev') prevPage();
+
+    if (interaction === 'prev') prevPage();
     else if (interaction === 'next') nextPage();
-    else
-        console.error(`HandleBookInteraction: Interação desconhecida: "${interaction}".`);
+    else throw new Error(`HandleBookInteraction Error: Unknown interaction: "${interaction}".`);
 }
 
 /**
- * Função para ir para a próxima página, controlando as classes HTML para manipular a animação de virar a página e populando as páginas conforme necessário.
+ * Exucuta a lógica de navegar para a próxima página até fechar o caderno.
+ * Trata animações e repopula o DOM de forma necessária.
  * @returns {void} 
  */
 function nextPage() {
     let index = taskNote.getPageIndex();
     const lastIndex = taskNote.getLastPageIndex();
     const state = taskNote.getState();
+
+    // Lida com fechamento/abertura do caderno fisicamente 
     if (state === 'CLOSED_FRONT') {
         changeState('open_front');
         return;
@@ -564,16 +486,21 @@ function nextPage() {
         return;
     }
 
-    index += 2;
+    index += 2; // Pula duas páginas (frente e verso)
     taskNote.setIndex(index);
+
+    // Prepara as folhas fantasmas usadas apenas para a animação 3D de virada
     populatePage(taskNote.dom.animFront, index - 1);
     populatePage(taskNote.dom.animBack, index);
     populatePage(taskNote.dom.sheetRight, index + 1);
 
     taskNote.dom.animated.style.display = 'block';
+    // O void abaixo força o navegador a recalcular o CSS (Reflow) antes de adicionar a classe,
+    // garantindo que a animação (transition) ocorra fluida desde o inicio
     void taskNote.dom.animated.offsetWidth;
     taskNote.dom.animated.classList.add('turn-next');
 
+    // Ao fim da animação, consolida os dados na página fixa e oculta a malha de animação
     taskNote.dom.animated.addEventListener('transitionend', () => {
         populatePage(taskNote.dom.sheetLeft, index);
         taskNote.dom.animated.style.display = 'none';
@@ -582,12 +509,14 @@ function nextPage() {
 }
 
 /**
- * Função para voltar para a página anterior, controlando as classes HTML para manipular a animação de virar a página e populando as páginas conforme necessário.
+ * Exucuta a lógica de navegar para a página anterior até fechar o caderno.
+ * Trata animações e repopula o DOM de forma necessária.
  * @returns {void}
  */
 function prevPage() {
     let index = taskNote.getPageIndex();
     const state = taskNote.getState();
+
     if (index === 0 && state === 'OPENED') {
         changeState('close_front');
         return;
@@ -596,16 +525,20 @@ function prevPage() {
         return;
     }
 
-    index -= 2;
+    index -= 2; // Volta duas páginas (frente e verso)
     populatePage(taskNote.dom.animBack, index + 2);
     populatePage(taskNote.dom.animFront, index + 1);
     populatePage(taskNote.dom.sheetLeft, index);
 
+    // Prepara animação engatilhando de forma reversa
     taskNote.dom.animated.classList.add('start-flipped');
     taskNote.dom.animated.style.display = 'block';
+    // O void abaixo força o navegador a recalcular o CSS (Reflow) antes de adicionar a classe,
+    // garantindo que a animação (transition) ocorra fluida desde o inicio
     void taskNote.dom.animated.offsetWidth;
     taskNote.dom.animated.classList.add('turn-prev');
 
+    // Ao fim da animação, consolida os dados na página fixa e oculta a malha de animação
     taskNote.dom.animated.addEventListener('transitionend', () => {
         populatePage(taskNote.dom.sheetRight, index + 1);
         taskNote.setIndex(index);
@@ -615,55 +548,69 @@ function prevPage() {
 }
 
 /**
- * Função para arquivar uma tarefa, removendo-a da visualização e marcando-a como arquivada no banco de dados local.
- * @param {HTMLButtonElement} buttonArchive - O botão de arquivar que foi clicado, usado para identificar qual tarefa deve ser arquivada através do dataset da linha da tarefa.
+ * Procesa o arquivamento de uma tarefa especificada.
+ * @param {HTMLButtonElement} buttonArchive Elemento clicado contendo referência da linha de tarefa
  * @returns {void}
- * @throws {Error} Lança um erro se o UUID da tarefa não for encontrado no dataset da linha.
+ * @throws {Error} Lança um erro se o UUID da tarefa não for encontrado no dataset da linha
  */
 function archiveTask(buttonArchive) {
     const line = buttonArchive.parentNode;
     const uuid = line.dataset.uuid;
-    if (uuid) {
-        taskNote.archiveTask(uuid);
-        const sheet = line.closest('.sheet');
-        if (sheet && sheet.id === 'sheet-left')
-            populatePage(taskNote.dom.sheetLeft, taskNote.getPageIndex());
-        else if (sheet && sheet.id === 'sheet-right')
-            populatePage(taskNote.dom.sheetRight, taskNote.getPageIndex() + 1);
-    } else
-        throw new Error(`ArchiveTask Error: Task UUID not found for the selected task.`);
+
+    if (!uuid) {
+        console.error(`ArchiveTask Error: Task UUID not found in dataset.`);
+        return; // Usa early return e evita quebrar o sistema inteiro se houver falha de DOM
+    }
+
+    taskNote.archiveTask(uuid);
+
+    // Descobre em qual lado do caderno estamos clicando para re-renderizar apenas o lado certo
+    const sheet = line.closest('.sheet');
+    if (sheet?.id === 'sheet-left')
+        populatePage(taskNote.dom.sheetLeft, taskNote.getPageIndex());
+    else if (sheet?.id === 'sheet-right')
+        populatePage(taskNote.dom.sheetRight, taskNote.getPageIndex() + 1);
 }
 
 /**
- * Função para arquivar uma página, removendo-a da visualização e marcando-a como arquivada no banco de dados local.
- * @param {HTMLButtonElement} el - O elemento do botão de arquivar que foi clicado, usado para identificar qual página deve ser arquivada através do dataset da folha da página.
+ * Processa o arquivamento de uma página inteira. Em cascata as tarefas da página também são arquivadas.
+ * @param {HTMLButtonElement} el Elemento clicado contendo referência da linha de título da página
  * @return {void}
- * @throws {Error} Lança um erro se a folha da página não for encontrada ou se os dados da página não forem encontrados para o índice da página atual.
+ * @throws {Error} Lança um erro se a folha da página não for encontrada ou se os dados da página não forem encontrados
  */
 function archivePage(el) {
     const sheet = el.closest('.sheet');
-    if (!sheet) throw new Error(`ArchivePage Error: Sheet not found for the selected page.`);
+    if (!sheet) {
+        console.error(`ArchivePage Error: Sheet container not found.`);
+        return;
+    }
+
+    // Se for a folha esquerda o índice é o atual, se for direita, atual + 1.
     const index = (sheet.id === 'sheet-left') ? taskNote.getPageIndex() : taskNote.getPageIndex() + 1;
     const page = taskNote.getPageData(index);
 
-    if (page) {
-        taskNote.archivePage(page.uuid);
-        const state = taskNote.getState();
-        if (state === 'OPENED')
-            if (index % 2 === 0) {
-                populatePage(taskNote.dom.sheetLeft, index);
-                populatePage(taskNote.dom.sheetRight, index + 1);
-            } else {
-                populatePage(taskNote.dom.sheetLeft, index - 1);
-                populatePage(taskNote.dom.sheetRight, index);
-            }
-        else if (state === 'CLOSED_FRONT')
-            populatePage(taskNote.dom.sheetLeft, index);
-        else if (state === 'CLOSED_BACK')
-            populatePage(taskNote.dom.sheetRight, index);
+    if (!page) {
+        console.error(`ArchivePage Error: Data for index ${index} not found.`);
+        return;
+    }
 
-    } else
-        throw new Error(`ArchivePage Error: Page data not found for the current page index.`);
+    taskNote.archivePage(page.uuid);
+    const state = taskNote.getState();
+
+    // Recalcula visualmente as folhas dependendo de como o livro está fisicamente aberto.
+    if (state === 'OPENED') {
+        if (index % 2 === 0) {
+            populatePage(taskNote.dom.sheetLeft, index);
+            populatePage(taskNote.dom.sheetRight, index + 1);
+        } else {
+            populatePage(taskNote.dom.sheetLeft, index - 1);
+            populatePage(taskNote.dom.sheetRight, index);
+        }
+    } else if (state === 'CLOSED_FRONT')
+        populatePage(taskNote.dom.sheetLeft, index);
+    else if (state === 'CLOSED_BACK')
+        populatePage(taskNote.dom.sheetRight, index);
 }
 
+// Inicia o app garantindo que execute apenas uma vez após o DOM carregar.
 document.addEventListener('DOMContentLoaded', initialize, { once: true });

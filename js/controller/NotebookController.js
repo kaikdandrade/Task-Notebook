@@ -94,7 +94,8 @@ export class NotebookController {
 
     // ESTADOS DA INTERFACE UI
     #state = {
-        name: 'CLOSED_FRONT',
+        name: 'OPENED', // DEFAULT OPENED
+        action: '', // Armazena a ultima ação de estado usado
         index: 0, // Refere-se sempre a página da esquerda, para direita (+1)
         // isAnimating: false
     };
@@ -123,6 +124,81 @@ export class NotebookController {
     };
 
     /**
+     * Chave do localStorage para salvar os dados persistentes.
+     * @type {string}
+     */
+    #STORAGE_KEY = 'notebook_data_web';
+
+    /**
+     * Construtor da classe.
+     * Inicia carregando os dados do localStorage.
+     */
+    constructor() {
+        this.#loadWebData();
+    }
+
+    /**
+     * Carrega os dados da web (localStorage).
+     * Recupera as páginas, tarefas, estado do caderno, ultima ação e índice da página.
+     * Valida o índice para garantir que a página exista e reseta se o caderno estiver fechado.
+     */
+    #loadWebData() {
+        try {
+            const storedData = localStorage.getItem(this.#STORAGE_KEY);
+            if (storedData) { // Data existindo...
+                const parsedData = JSON.parse(storedData);
+
+                // Pegando os dados de página e tarefas
+                this.#database = {
+                    pages: parsedData.pages || [],
+                    tasks: parsedData.tasks || []
+                };
+
+                // Recupera o estado se ele existir no objeto salvo
+                if (parsedData.state)
+                    this.#state.name = parsedData.state;
+
+                // Recupera a ultima ação de estado no objeto salvo 
+                if (parsedData.action)
+                    this.#state.action = parsedData.action;
+
+                // Recupera o índice se ele existir no objeto salvo
+                if (parsedData.index !== undefined)
+                    this.#state.index = parsedData.index;
+
+                if (this.#state.name === 'CLOSED_FRONT')
+                    this.#state.index = 0;
+                else if (this.#state.name === 'CLOSED_BACK')
+                    this.#state.index = this.getLastPageIndex();
+            }
+        } catch (error) {
+            throw new Error('NotebookController Error: Failed for load data from localStorage.', error);
+        }
+    }
+
+    /**
+     * Salva os dados ativos no localStorage.
+     * e também: o estado, a ultimação de estado e o índice atual.
+     */
+    #saveWebData() {
+        try {
+            // Filtra o banco de dados atual para não salvar dados arquivados
+            // e adiciona os dados de estado e indice
+            const dataToSave = {
+                pages: this.#database.pages.filter(page => !page.archived),
+                tasks: this.#database.tasks.filter(task => !task.archived),
+                state: this.#state.name,
+                action: this.#state.action,
+                index: this.#state.index
+            };
+
+            localStorage.setItem(this.#STORAGE_KEY, JSON.stringify(dataToSave));
+        } catch (error) {
+            throw new Error('NotebookCOntroller Error: Failed to save data to localStorage.', error);
+        }
+    }
+
+    /**
      * Função para ajudar na alteração dos dados no banco de dados local.
      * @param {string} table Nome da tabela.
      * @param {string} id Identificador do dado que sofrerá alteração.
@@ -140,6 +216,8 @@ export class NotebookController {
             });
 
             data.update_at = new Date().toISOString();
+            this.#saveWebData(); // Salva no localStorage
+
             return data;
         } catch (error) {
             throw new Error(`NotebookController Error: Failed to update table ${table}. Details: ${error.message}`);
@@ -170,6 +248,9 @@ export class NotebookController {
         }
 
         this.#state.name = config.newState;
+        this.#state.action = action;
+        this.#saveWebData(); // Salva no localStorage
+
         return config;
     }
 
@@ -229,6 +310,14 @@ export class NotebookController {
     }
 
     /**
+     * Retorna a última ação de estado executada.
+     * @returns {string} ex: 'open_front', 'close_back'
+     */
+    getLastAction() {
+        return this.#state.action;
+    }
+
+    /**
      * Retorna a quantidade de tarefas aceitas por página. DEFAULT 20
      * @returns {number}
      */
@@ -261,6 +350,8 @@ export class NotebookController {
                 create_at: timestamp,
                 update_at: timestamp
             });
+            this.#saveWebData(); // Salva no localStorage
+
             return uuid;
         } catch (error) {
             throw new Error(`NotebookController Error: Failed to add new page. ${error.message}`);
@@ -293,6 +384,8 @@ export class NotebookController {
                 create_at: timestamp,
                 update_at: timestamp
             });
+            this.#saveWebData(); // Salva no localStorage
+
             return uuid;
         } catch (error) {
             throw new Error(`NotebookController Error: Failed to add new task. ${error.message}`);
@@ -358,6 +451,7 @@ export class NotebookController {
      */
     setIndex(index) {
         this.#state.index = index;
+        this.#saveWebData(); // Salva no localStorage
     }
 
     /**
