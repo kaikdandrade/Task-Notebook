@@ -378,15 +378,41 @@ function templatePage(sheet, index) {
     pageNum.innerHTML = index + 1;
 
     let pageTitle = container.querySelector('.line.title .page-title');
-    const templateTitle = getTextLanguage('controls/newPage');
-    pageTitle.innerHTML = templateTitle;
 
-    // Configura para criar a página nova assim que o usuário alterar o texto do template
-    pageTitle = makeEditable(pageTitle, templateTitle, (titleText) => {
-        pageTitle.title = titleText;
-        taskNote.newPage(titleText);
-        populatePage(sheet, index); // Atualiza visualmente trocando o modo template para modo de leitura/edição padrão
-    }, true);
+    // Identifica se estamos na página da direita (índices ímpares)
+    const isRightPage = index % 2 !== 0;
+    // Se for a página da direita, verifica se a da esquerda ainda é um template
+    const isLeftPageTemplate = isRightPage ? taskNote.isTemplatePage(index - 1) : false;
+
+    if (isRightPage && isLeftPageTemplate) {
+        // Bloqueia a criação: deixa o título vazio e não chama o makeEditable
+        if (pageTitle) {
+            pageTitle.innerHTML = '';
+            // Garante que o usuário não consiga clicar para editar
+            pageTitle.contentEditable = "false"; 
+        }
+    } else {
+        // Comportamento normal: permite criar a nova página
+        const templateTitle = getTextLanguage('controls/newPage');
+        if (pageTitle) {
+            pageTitle.innerHTML = templateTitle;
+            
+            // Configura para criar a página nova assim que o usuário alterar o texto do template
+            pageTitle = makeEditable(pageTitle, templateTitle, (titleText) => {
+                pageTitle.title = titleText;
+                taskNote.newPage(titleText);
+                
+                // Atualiza visualmente a folha atual (esquerda)
+                populatePage(sheet, index); 
+                
+                // Força a atualização da página da direita para liberar a criação nela,
+                // caso estejamos na esquerda.
+                if (!isRightPage) {
+                    populatePage(taskNote.dom.sheetRight, index + 1);
+                }
+            }, true);
+        }
+    }
 
     configureNavigationInteraction(container, index);
     update();
@@ -408,7 +434,7 @@ function cleanPage(container) {
     const lineTasks = container.querySelectorAll('.line.task');
     lineTasks.forEach(line => {
         delete line.dataset.uuid; // Remove identificadores passados
-        line.classList.remove('task-archived');
+        line.classList.remove('task-completed');
 
         const archiveBtn = line.querySelector('.archive');
         if (archiveBtn) archiveBtn.classList.remove('disabled');
