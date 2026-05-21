@@ -7,7 +7,7 @@
  * @type {string} metadata.authorUrl - URL do perfil do autor
  */
 export const METADATA = {
-    version: '1.6',
+    version: '1.7',
     author: "Kaik D' Andrade",
     authorUrl: 'https://github.com/kaikdandrade'
 };
