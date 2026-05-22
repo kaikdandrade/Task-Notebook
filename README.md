@@ -74,5 +74,5 @@ Este projeto está sob a licença [MIT](LICENSE). Veja o arquivo `LICENSE` para 
 
 ---
 <p align="center">
-  Desenvolvido com dedicação por <a href="[https://github.com/kaikdandrade](https://github.com/kaikdandrade)">Kaik D' Andrade</a>
+  Desenvolvido com dedicação por <a href="https://github.com/kaikdandrade/">Kaik D' Andrade</a>
 </p>
