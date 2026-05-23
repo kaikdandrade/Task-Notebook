@@ -9,9 +9,11 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Vers%C3%A3o-1.7-blue" alt="Versão 1.7">
-  <img src="https://img.shields.io/badge/Licen%C3%A7a-MIT-green" alt="Licença MIT">
-  <img src="https://img.shields.io/badge/JavaScript-Vanilla-yellow" alt="Vanilla JS">
+  <img src="https://img.shields.io/badge/Vers%C3%A3o-1.7-blue" alt="Versão 1.7" />
+  <img src="https://img.shields.io/badge/JavaScript-Vanilla-yellow" alt="Vanilla JS" />
+  <img src="https://img.shields.io/badge/Licen%C3%A7a-MIT-green" alt="Licença MIT" />
+  <img src="https://img.shields.io/github/issues/kaikdandrade/LanguageController" />
+  <img src="https://img.shields.io/github/stars/kaikdandrade/LanguageController" />
 </p>
 
 ## 📖 Sobre o Projeto
