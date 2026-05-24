@@ -66,7 +66,7 @@
  * const pageId = notebook.newPage('Planejamento Semanal');
  * notebook.newTask(pageId, 'Finalizar relatório');
  */
-export class NotebookController {
+class NotebookController {
     /**
      * DATABASE SCHEMA SIMULATION
      * 

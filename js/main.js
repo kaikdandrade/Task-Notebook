@@ -1,7 +1,3 @@
-import { NotebookController } from './controller/NotebookController.js';
-import { getTextLanguage, reloadLanguage } from './language/language.js';
-import { METADATA } from './metadata.js';
-
 /**
  * @type {NotebookController} 
  */
@@ -53,20 +49,6 @@ function initialize() {
     if (domErrors)
         throw new Error('Initialize Error: Initialization aborted, incomplete HTML structure.');
 
-    // Delegação de eventos estáticos: Estes botões não mudam estruturalmente, 
-    // então podemos anexar os eventos uma única vez na inicialização.
-    notebookContainer.querySelectorAll('.nav').forEach(btn => {
-        btn.addEventListener('click', function () { handleBookInteraction(this); });
-    });
-
-    notebookContainer.querySelectorAll('.line.title .archive').forEach(btn => {
-        btn.addEventListener('click', function () { archivePage(this); });
-    });
-
-    notebookContainer.querySelectorAll('.line.task .archive').forEach(btn => {
-        btn.addEventListener('click', function () { archiveTask(this); });
-    });
-
     // Código para voltar a página pro estado salvo no localstorage
     switch (taskNote.getState()) {
         case "OPENED": {
@@ -87,48 +69,6 @@ function initialize() {
             break;
         }
     }
-}
-
-/**
- * Atualiza metadados visuais na interface, lendo os dados do arquivo de metadata.
- * E tbm atualiza o sistema de internacionalização.
- */
-function update() {
-    reloadLanguage(); // Atualiza o idioma atual da interface.
-
-    const metadataElements = document.querySelectorAll('[data-metadata]');
-    metadataElements.forEach(el => {
-        const key = el.dataset.metadata;
-        let content = '';
-        let shouldAppend = false;
-
-        // ...
-        switch (key) {
-            case 'title':
-            case 'description':
-                content = getTextLanguage(key); // Captura o texto traduzido do sistema de internacionalização
-                break;
-            case 'version':
-                content = ` v${METADATA.version}`;
-                shouldAppend = true;
-                break;
-            case 'author':
-                content = METADATA.author;
-                break;
-            default:
-                return; // Chave desconhecida...
-        }
-
-        // Aplica o conteúdo no HTML. Se for uma tag <meta>, atualiza o atributo 'content'.
-        // Se não atualiza o 'textContent'.
-        if (el instanceof HTMLMetaElement)
-            el.setAttribute('content', content);
-        else
-            if (shouldAppend)
-                el.textContent += content;
-            else
-                el.textContent = content;
-    });
 }
 
 /**
@@ -347,7 +287,7 @@ function populatePage(sheet, index) {
         const archiveBtn = templateTaskLine.querySelector('.archive');
         if (archiveBtn) archiveBtn.classList.add('disabled');
 
-        const templateName = getTextLanguage('controls/newTask');
+        const templateName = language.getTextLanguage('controls/newTask');
         templateTaskName.innerHTML = templateName;
         templateTaskName.classList.add('task-template');
 
@@ -359,7 +299,7 @@ function populatePage(sheet, index) {
     }
 
     configureNavigationInteraction(container, index);
-    update();
+    reloadLanguage();
 }
 
 /**
@@ -389,22 +329,22 @@ function templatePage(sheet, index) {
         if (pageTitle) {
             pageTitle.innerHTML = '';
             // Garante que o usuário não consiga clicar para editar
-            pageTitle.contentEditable = "false"; 
+            pageTitle.contentEditable = "false";
         }
     } else {
         // Comportamento normal: permite criar a nova página
-        const templateTitle = getTextLanguage('controls/newPage');
+        const templateTitle = language.getTextLanguage('controls/newPage');
         if (pageTitle) {
             pageTitle.innerHTML = templateTitle;
-            
+
             // Configura para criar a página nova assim que o usuário alterar o texto do template
             pageTitle = makeEditable(pageTitle, templateTitle, (titleText) => {
                 pageTitle.title = titleText;
                 taskNote.newPage(titleText);
-                
+
                 // Atualiza visualmente a folha atual (esquerda)
-                populatePage(sheet, index); 
-                
+                populatePage(sheet, index);
+
                 // Força a atualização da página da direita para liberar a criação nela,
                 // caso estejamos na esquerda.
                 if (!isRightPage) {
@@ -415,7 +355,7 @@ function templatePage(sheet, index) {
     }
 
     configureNavigationInteraction(container, index);
-    update();
+    reloadLanguage();
 }
 
 /**
